@@ -1,10 +1,101 @@
 #include <iostream>
 #include <vector>
+#include <string>
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include "shader.hpp"
 #include "shapes.h"
 #include "linefont.h"
+#include "layout.h"
+
+// ============================================================
+//  Collision helpers
+// ============================================================
+
+// Push a circle out of an axis-aligned box. Returns true if overlap.
+static bool circleVsAABB(float bx, float by, float br,
+                          float rx, float ry, float rhw, float rhh,
+                          float& pushX, float& pushY)
+{
+    float cx = fmaxf(rx - rhw, fminf(bx, rx + rhw));
+    float cy = fmaxf(ry - rhh, fminf(by, ry + rhh));
+    float dx = bx - cx, dy = by - cy;
+    float d2 = dx*dx + dy*dy;
+    if (d2 >= br*br) { pushX = pushY = 0; return false; }
+    float d = sqrtf(d2);
+    if (d < 1e-6f) { pushX = 0; pushY = br; return true; }
+    float ov = br - d;
+    pushX = dx/d * ov;
+    pushY = dy/d * ov;
+    return true;
+}
+
+// Push a circle out of another circle.
+static void circleVsCircle(float& bx, float& by, float br,
+                            float ox, float oy, float or_)
+{
+    float dx = bx - ox, dy = by - oy;
+    float d2 = dx*dx + dy*dy;
+    float minD = br + or_;
+    if (d2 >= minD*minD || d2 < 1e-12f) return;
+    float d = sqrtf(d2), ov = minD - d;
+    bx += dx/d * ov;
+    by += dy/d * ov;
+}
+
+// Push a circle out of a triangle defined by three vertices (in world space).
+// Uses closest-point-on-each-edge and interior test.
+static void circleVsTriangle(float& bx, float& by, float br,
+                              float ax, float ay,
+                              float bvx, float bvy,
+                              float cvx, float cvy)
+{
+    // Helper: closest point on segment p0->p1 to point q
+    auto closestOnSeg = [](float qx, float qy,
+                           float p0x, float p0y, float p1x, float p1y,
+                           float& cx, float& cy) {
+        float ex = p1x-p0x, ey = p1y-p0y;
+        float t = ((qx-p0x)*ex + (qy-p0y)*ey) / (ex*ex + ey*ey + 1e-12f);
+        t = fmaxf(0.f, fminf(1.f, t));
+        cx = p0x + t*ex; cy = p0y + t*ey;
+    };
+
+    // Find closest point on the triangle to ball centre
+    float bestDist2 = 1e30f, bestCx = 0, bestCy = 0;
+    float segs[3][4] = {
+        {ax,ay,bvx,bvy}, {bvx,bvy,cvx,cvy}, {cvx,cvy,ax,ay}
+    };
+    for (auto& seg : segs) {
+        float cx, cy;
+        closestOnSeg(bx, by, seg[0],seg[1],seg[2],seg[3], cx, cy);
+        float dx = bx-cx, dy = by-cy, d2 = dx*dx+dy*dy;
+        if (d2 < bestDist2) { bestDist2 = d2; bestCx = cx; bestCy = cy; }
+    }
+
+    // Check if ball centre is inside the triangle (winding test)
+    auto sign = [](float px,float py,float ax,float ay,float bx,float by){
+        return (px-bx)*(ay-by) - (ax-bx)*(py-by);
+    };
+    bool inside = (sign(bx,by,ax,ay,bvx,bvy) <= 0) &&
+                  (sign(bx,by,bvx,bvy,cvx,cvy) <= 0) &&
+                  (sign(bx,by,cvx,cvy,ax,ay) <= 0);
+    inside = inside || ((sign(bx,by,ax,ay,bvx,bvy) >= 0) &&
+                        (sign(bx,by,bvx,bvy,cvx,cvy) >= 0) &&
+                        (sign(bx,by,cvx,cvy,ax,ay) >= 0));
+
+    if (!inside && bestDist2 >= br*br) return;  // no collision
+
+    float dist = sqrtf(bestDist2);
+    float dx = bx - bestCx, dy = by - bestCy;
+    if (inside || dist < 1e-6f) {
+        // Push out along the shortest edge normal — use closest edge
+        // fallback: push straight up
+        dx = 0; dy = 1; dist = 0;
+    }
+    float ov = br - dist;
+    if (dist > 1e-6f) { bx += dx/dist * ov; by += dy/dist * ov; }
+    else              { bx += 0; by += ov; }
+}
 
 // Move/scale/rotate all selected shapes based on held keys
 void processInput(GLFWwindow* window, std::vector<RenderShape*>& sel) {
@@ -55,7 +146,15 @@ GLFWwindow* setUp() {
 //  Main
 // ============================================================
 
-int main() {
+int main(int argc, char* argv[]) {
+    // Command-line import: ./main --import <file>
+    std::string importFile = "";
+    for (int i = 1; i < argc - 1; i++) {
+        if (std::string(argv[i]) == "--import") {
+            importFile = argv[i + 1];
+        }
+    }
+
     GLFWwindow* window = setUp();
 
     GLuint shaderID  = LoadShaders("vertex.glsl", "fragment.glsl");
@@ -208,12 +307,24 @@ int main() {
     int obs1Cycle = 0, obs2Cycle = 0;
     double lastKey1 = 0.0, lastKey2 = 0.0, lastKey3 = 0.0, lastKey4 = 0.0;
 
+    bool gameWon       = false;
     bool wireframeMode = false;
     double lastToggle  = 0.0;
 
     // Bridge animation: open = tilted apart, closed = both at pi/2, edges meeting in a line
     bool   bridgeOpen       = true;
     double lastBridgeToggle = 0.0;
+
+    // Apply imported layout if --import was given
+    if (!importFile.empty()) {
+        Layout layout;
+        if (importLayout(importFile.c_str(), layout)) {
+            applyLayout(layout, ball, hole, obs1a, obs1b, obs2a, obs2b, bridgeOpen);
+            std::cout << "Layout imported from: " << importFile << "\n";
+        } else {
+            std::cerr << "Failed to import layout from: " << importFile << "\n";
+        }
+    }
     const float rotSpeed    = 0.5f;  // radians per second
     const float scaleSpeed  = 0.5f * (0.6f / rampTilt);  // scaled so both finish together
 
@@ -239,6 +350,32 @@ int main() {
 
         if (glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS) {
             if (now - lastBridgeToggle > 0.3) { bridgeOpen = !bridgeOpen; lastBridgeToggle = now; }
+        }
+
+        if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) {
+            // Reset ball to start
+            ball.tx = ballX; ball.ty = ballY; ball.rotation = 0; ball.sx = 1; ball.sy = 1;
+            // Reset obstacles to initial positions/transforms
+            obs1a.tx = -0.2f; obs1a.ty = -0.35f; obs1a.rotation = 0; obs1a.sx = 1; obs1a.sy = 1;
+            obs1b.tx =  0.2f; obs1b.ty = -0.35f; obs1b.rotation = 0; obs1b.sx = 1; obs1b.sy = 1;
+            obs2a.tx = -0.25f; obs2a.ty = 0.35f; obs2a.rotation = 0; obs2a.sx = 1; obs2a.sy = 1;
+            obs2b.tx =  0.25f; obs2b.ty = 0.35f; obs2b.rotation = 0; obs2b.sx = 1; obs2b.sy = 1;
+            hole.tx = holeX; hole.ty = holeY; hole.rotation = 0; hole.sx = 1; hole.sy = 1;
+            // Clear selection and win state
+            for (RenderShape* r : selectedShapes) r->selected = false;
+            selectedShapes.clear();
+            gameWon = false;
+            bridgeOpen = true;
+            obs1Cycle = 0; obs2Cycle = 0;
+        }
+
+        // F5 — export current layout
+        if (glfwGetKey(window, GLFW_KEY_F5) == GLFW_PRESS && now - lastToggle > 0.5) {
+            if (exportLayout("layout.json", ball, hole, obs1a, obs1b, obs2a, obs2b, bridgeOpen))
+                std::cout << "Layout exported to layout.json\n";
+            else
+                std::cerr << "Export failed\n";
+            lastToggle = now;
         }
 
         {
@@ -309,8 +446,86 @@ int main() {
             addToSel(&hole); lastKey4 = now;
         }
 
-        processInput(window, selectedShapes);
+        if (!gameWon) processInput(window, selectedShapes);
 
+        // ---- Collision detection (ball only) ----
+        {
+            const float gHW = grassW * 0.5f;
+            const float gHH = grassH * 0.5f;
+
+            // 1. Grass wall clamp
+            ball.tx = fmaxf(-gHW + ballRadius, fminf(gHW - ballRadius, ball.tx));
+            ball.ty = fmaxf(-gHH + ballRadius, fminf(gHH - ballRadius, ball.ty));
+
+            // 2. River collision — exact triangle tests + centre gap rect
+            //    World vertices derived from makeTriangle(bankBase=0.4, bankDepth=0.35)
+            //    rotated and translated to match riverTriL / riverTriR.
+            //    Left tri:  (-0.55,  0.2), (-0.55, -0.2), (-0.2, 0)
+            //    Right tri: ( 0.55, -0.2), ( 0.55,  0.2), ( 0.2, 0)
+            {
+                const float tipX = bankDepth - grassHW;   // -0.2  (left tip x, right is +0.2)
+                const float hb   = bankBase * 0.5f;        // 0.2
+
+                // Left bank triangle
+                circleVsTriangle(ball.tx, ball.ty, ballRadius,
+                                 -grassHW,  hb,
+                                 -grassHW, -hb,
+                                  tipX,     0.0f);
+                // Right bank triangle
+                circleVsTriangle(ball.tx, ball.ty, ballRadius,
+                                  grassHW, -hb,
+                                  grassHW,  hb,
+                                 -tipX,     0.0f);
+                // Centre gap — only blocked when bridge is raised
+                if (bridgeOpen) {
+                    float px, py;
+                    if (circleVsAABB(ball.tx, ball.ty, ballRadius,
+                                      0.0f, riverY, -tipX, riverH * 0.5f, px, py)) {
+                        ball.tx += px; ball.ty += py;
+                    }
+                }
+            }
+
+            // 3. Purple rect obstacles — use actual sx/sy in case player scaled them
+            float r2hw = (obs2W * 0.5f), r2hh = (obs2H * 0.5f);
+            for (RenderShape* obs : {&obs2a, &obs2b}) {
+                float px, py;
+                if (circleVsAABB(ball.tx, ball.ty, ballRadius,
+                                  obs->tx, obs->ty,
+                                  r2hw * obs->sx, r2hh * obs->sy,
+                                  px, py)) {
+                    ball.tx += px; ball.ty += py;
+                }
+            }
+
+            // 4. Orange triangle obstacles — exact triangle collision
+            //    Local vertices from makeTriangle(base=0.12, height=0.14):
+            //    (-0.06, -0.0467), (0.06, -0.0467), (0, 0.0933)
+            //    Rotated by shape's current rotation then translated to world position.
+            auto obsTriCollide = [&](RenderShape& obs) {
+                float ca = cosf(obs.rotation), sa = sinf(obs.rotation);
+                auto rot = [&](float lx, float ly, float& wx, float& wy) {
+                    wx = obs.tx + ca*lx - sa*ly;
+                    wy = obs.ty + sa*lx + ca*ly;
+                };
+                float hb = obs1Base * 0.5f;
+                float third = obs1Height / 3.0f;
+                float ax, ay, bx, by, cx, cy;
+                rot(-hb, -third, ax, ay);
+                rot( hb, -third, bx, by);
+                rot(0,  2*third, cx, cy);
+                circleVsTriangle(ball.tx, ball.ty, ballRadius, ax, ay, bx, by, cx, cy);
+            };
+            obsTriCollide(obs1a);
+            obsTriCollide(obs1b);
+
+            // 5. Hole — win condition, no push-out
+            float dx = ball.tx - hole.tx, dy = ball.ty - hole.ty;
+            if (dx*dx + dy*dy <= holeRadius * holeRadius) {
+                gameWon = true;
+                ball.tx = hole.tx; ball.ty = hole.ty;  // snap ball to hole
+            }
+        }
 
         // Sync soccer spots to ball transform
         auto syncSpot = [](RenderShape& spot, const RenderShape& parent, float ox, float oy) {
@@ -345,13 +560,18 @@ int main() {
         font.drawString("QE  ROTATE",  tx, ty,    cw, ch, fg, fg, fg, projData); ty -= ls;
         font.drawString("+-  SCALE",   tx, ty,    cw, ch, fg, fg, fg, projData); ty -= ls;
         font.drawString("ENTER WIRE",  tx, ty,    cw, ch, fg, fg, fg, projData); ty -= ls;
-        font.drawString("P  BRIDGE",   tx, ty,    cw, ch, fg, fg, fg, projData); ty -= ls * 1.4f;
+        font.drawString("P  BRIDGE",   tx, ty,    cw, ch, fg, fg, fg, projData); ty -= ls;
+        font.drawString("R  RESTART",  tx, ty,    cw, ch, fg, fg, fg, projData); ty -= ls;
+        font.drawString("F5 EXPORT",   tx, ty,    cw, ch, fg, fg, fg, projData); ty -= ls * 1.4f;
         font.drawString("SELECT:",     tx, ty,    cw, ch, fg, fg, fg, projData); ty -= ls;
         font.drawString("1  BALL",     tx, ty,    cw, ch, fg, fg, fg, projData); ty -= ls;
         font.drawString("2  TRI",      tx, ty,    cw, ch, fg, fg, fg, projData); ty -= ls;
         font.drawString("3  RECT",     tx, ty,    cw, ch, fg, fg, fg, projData); ty -= ls;
         font.drawString("4  HOLE",     tx, ty,    cw, ch, fg, fg, fg, projData); ty -= ls;
         font.drawString("0  DESEL",    tx, ty,    cw, ch, fg, fg, fg, projData);
+
+        if (gameWon)
+            font.drawString("YOU WIN", -0.25f, 0.0f, 0.07f, 0.09f, 1.0f, 0.9f, 0.2f, projData);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
