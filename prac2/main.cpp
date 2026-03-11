@@ -1,6 +1,7 @@
 #include <iostream>
 #include <vector>
 #include <string>
+#include <functional>
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include "shader.hpp"
@@ -97,8 +98,10 @@ static void circleVsTriangle(float& bx, float& by, float br,
     else              { bx += 0; by += ov; }
 }
 
-// Move/scale/rotate all selected shapes based on held keys
-void processInput(GLFWwindow* window, std::vector<RenderShape*>& sel) {
+// Move/scale/rotate all selected shapes based on held keys, clamping to grass bounds
+void processInput(GLFWwindow* window, std::vector<RenderShape*>& sel,
+                  float grassHW, float grassHH)
+{
     if (sel.empty()) return;
     for (RenderShape* s : sel) {
         if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) s->ty += 0.003f;
@@ -109,6 +112,9 @@ void processInput(GLFWwindow* window, std::vector<RenderShape*>& sel) {
         if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) s->rotation -= 0.02f;
         if (glfwGetKey(window, GLFW_KEY_EQUAL) == GLFW_PRESS) { s->sx *= 1.01f; s->sy *= 1.01f; }
         if (glfwGetKey(window, GLFW_KEY_MINUS) == GLFW_PRESS) { s->sx /= 1.01f; s->sy /= 1.01f; }
+        // Clamp centre position to grass area
+        s->tx = fmaxf(-grassHW, fminf(grassHW, s->tx));
+        s->ty = fmaxf(-grassHH, fminf(grassHH, s->ty));
     }
 }
 
@@ -185,8 +191,9 @@ int main(int argc, char* argv[]) {
     RenderShape startPad;
     RenderShape river, riverTriL, riverTriR;
     RenderShape rampBottom, rampTop;
-    RenderShape obs1a, obs1b;   // orange triangles  (key 2 → obs1a)
-    RenderShape obs2a, obs2b;   // purple rectangles (key 3 → obs2a)
+    // Dynamic obstacle pools — heap allocated, can be created/destroyed at runtime
+    vector<RenderShape*> triObs;   // orange triangles
+    vector<RenderShape*> rectObs;  // purple rectangles
     RenderShape hole, ball;
     // Ball soccer spots (5 small dark circles offset around centre)
     RenderShape spot1, spot2, spot3, spot4, spot5;
@@ -250,21 +257,33 @@ int main(int argc, char* argv[]) {
         {0.4f, 0.2f, 0.05f}, {0.4f, 0.2f, 0.05f}, false, 0, 0.0f,  rampGap);
     rampTop.rotation = M_PI / 2.0f - rampTilt;
 
-    // -- Obstacle 1: orange triangles (between start and river) --
+    // -- Obstacle types --
     glm::vec3 orangeCol(0.9f, 0.5f, 0.1f), orangePastel(1.0f, 0.85f, 0.7f);
     float obs1Base = 0.12f, obs1Height = 0.14f;
-    obs1a.init(makeTriangle(obs1Base, obs1Height), makeTriangleWire(obs1Base, obs1Height),
-        orangeCol, orangePastel, true, 2, -0.2f, -0.35f);
-    obs1b.init(makeTriangle(obs1Base, obs1Height), makeTriangleWire(obs1Base, obs1Height),
-        orangeCol, orangePastel, true, 2,  0.2f, -0.35f);
-
-    // -- Obstacle 2: purple rectangles (between river and hole) --
     glm::vec3 purpleCol(0.5f, 0.1f, 0.8f), purplePastel(0.8f, 0.7f, 1.0f);
     float obs2W = 0.06f, obs2H = 0.22f;
-    obs2a.init(makeRect(obs2W, obs2H), makeRectWire(obs2W, obs2H),
-        purpleCol, purplePastel, true, 3, -0.25f, 0.35f);
-    obs2b.init(makeRect(obs2W, obs2H), makeRectWire(obs2W, obs2H),
-        purpleCol, purplePastel, true, 3,  0.25f, 0.35f);
+
+    // Spawn helpers — allocate a new obstacle and add to its pool
+    auto spawnTri = [&](float x, float y) -> RenderShape* {
+        RenderShape* s = new RenderShape();
+        s->init(makeTriangle(obs1Base, obs1Height), makeTriangleWire(obs1Base, obs1Height),
+                orangeCol, orangePastel, true, 2, x, y);
+        triObs.push_back(s);
+        return s;
+    };
+    auto spawnRect = [&](float x, float y) -> RenderShape* {
+        RenderShape* s = new RenderShape();
+        s->init(makeRect(obs2W, obs2H), makeRectWire(obs2W, obs2H),
+                purpleCol, purplePastel, true, 3, x, y);
+        rectObs.push_back(s);
+        return s;
+    };
+
+    // Default layout — two triangles, two rects
+    spawnTri (-0.2f, -0.35f);
+    spawnTri ( 0.2f, -0.35f);
+    spawnRect(-0.25f, 0.35f);
+    spawnRect( 0.25f, 0.35f);
 
     // -- Hole --
     float holeRadius = 0.07f;
@@ -289,14 +308,14 @@ int main(int argc, char* argv[]) {
     spot4.init(makeCircle(spotR, 6), makeCircleWire(spotR, 6), spotCol, spotCol, false, 0);
     spot5.init(makeCircle(spotR, 6), makeCircleWire(spotR, 6), spotCol, spotCol, false, 0);
 
-    // Draw order: back to front
-    vector<RenderShape*> scene = {
-        &floor, &grass,
-        &startPad,
-        &obs1a, &obs1b,
-        &river, &riverTriL, &riverTriR,
-        &rampBottom, &rampTop,
-        &obs2a, &obs2b,
+    // Static scene elements (obstacles inserted dynamically each frame)
+    vector<RenderShape*> sceneStatic = {
+        &floor, &grass, &startPad,
+    };
+    vector<RenderShape*> sceneRiver = {
+        &river, &riverTriL, &riverTriR, &rampBottom, &rampTop,
+    };
+    vector<RenderShape*> sceneFg = {
         &borderN, &borderS, &borderE, &borderW,
         &hole,
         &ball, &spot1, &spot2, &spot3, &spot4, &spot5
@@ -306,6 +325,7 @@ int main(int argc, char* argv[]) {
     vector<RenderShape*> selectedShapes;
     int obs1Cycle = 0, obs2Cycle = 0;
     double lastKey1 = 0.0, lastKey2 = 0.0, lastKey3 = 0.0, lastKey4 = 0.0;
+    double lastSpawn = 0.0, lastDelete = 0.0;
 
     bool gameWon       = false;
     bool wireframeMode = false;
@@ -317,13 +337,11 @@ int main(int argc, char* argv[]) {
 
     // Apply imported layout if --import was given
     if (!importFile.empty()) {
-        Layout layout;
-        if (importLayout(importFile.c_str(), layout)) {
-            applyLayout(layout, ball, hole, obs1a, obs1b, obs2a, obs2b, bridgeOpen);
+        if (importLayout(importFile.c_str(), ball, hole, triObs, rectObs, bridgeOpen,
+                         spawnTri, spawnRect))
             std::cout << "Layout imported from: " << importFile << "\n";
-        } else {
+        else
             std::cerr << "Failed to import layout from: " << importFile << "\n";
-        }
     }
     const float rotSpeed    = 0.5f;  // radians per second
     const float scaleSpeed  = 0.5f * (0.6f / rampTilt);  // scaled so both finish together
@@ -353,14 +371,17 @@ int main(int argc, char* argv[]) {
         }
 
         if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) {
-            // Reset ball to start
+            // Reset ball and hole
             ball.tx = ballX; ball.ty = ballY; ball.rotation = 0; ball.sx = 1; ball.sy = 1;
-            // Reset obstacles to initial positions/transforms
-            obs1a.tx = -0.2f; obs1a.ty = -0.35f; obs1a.rotation = 0; obs1a.sx = 1; obs1a.sy = 1;
-            obs1b.tx =  0.2f; obs1b.ty = -0.35f; obs1b.rotation = 0; obs1b.sx = 1; obs1b.sy = 1;
-            obs2a.tx = -0.25f; obs2a.ty = 0.35f; obs2a.rotation = 0; obs2a.sx = 1; obs2a.sy = 1;
-            obs2b.tx =  0.25f; obs2b.ty = 0.35f; obs2b.rotation = 0; obs2b.sx = 1; obs2b.sy = 1;
             hole.tx = holeX; hole.ty = holeY; hole.rotation = 0; hole.sx = 1; hole.sy = 1;
+            // Reset all dynamic obstacles to defaults
+            for (RenderShape* s : triObs)  delete s;
+            for (RenderShape* s : rectObs) delete s;
+            triObs.clear(); rectObs.clear();
+            spawnTri (-0.2f, -0.35f);
+            spawnTri ( 0.2f, -0.35f);
+            spawnRect(-0.25f, 0.35f);
+            spawnRect( 0.25f, 0.35f);
             // Clear selection and win state
             for (RenderShape* r : selectedShapes) r->selected = false;
             selectedShapes.clear();
@@ -371,7 +392,7 @@ int main(int argc, char* argv[]) {
 
         // F5 — export current layout
         if (glfwGetKey(window, GLFW_KEY_F5) == GLFW_PRESS && now - lastToggle > 0.5) {
-            if (exportLayout("layout.json", ball, hole, obs1a, obs1b, obs2a, obs2b, bridgeOpen))
+            if (exportLayout("layout.json", ball, hole, triObs, rectObs, bridgeOpen))
                 std::cout << "Layout exported to layout.json\n";
             else
                 std::cerr << "Export failed\n";
@@ -432,21 +453,56 @@ int main(int argc, char* argv[]) {
             addToSel(&ball); lastKey1 = now;
         }
         if (glfwGetKey(window, GLFW_KEY_2) == GLFW_PRESS && now - lastKey2 > 0.2) {
-            // Cycle between obs1a and obs1b each press of 2
-            RenderShape* target = (obs1Cycle == 0) ? &obs1a : &obs1b;
-            obs1Cycle = 1 - obs1Cycle;
-            addToSel(target); lastKey2 = now;
+            if (!triObs.empty()) {
+                obs1Cycle = obs1Cycle % (int)triObs.size();
+                addToSel(triObs[obs1Cycle]);
+                obs1Cycle = (obs1Cycle + 1) % (int)triObs.size();
+            }
+            lastKey2 = now;
         }
         if (glfwGetKey(window, GLFW_KEY_3) == GLFW_PRESS && now - lastKey3 > 0.2) {
-            RenderShape* target = (obs2Cycle == 0) ? &obs2a : &obs2b;
-            obs2Cycle = 1 - obs2Cycle;
-            addToSel(target); lastKey3 = now;
+            if (!rectObs.empty()) {
+                obs2Cycle = obs2Cycle % (int)rectObs.size();
+                addToSel(rectObs[obs2Cycle]);
+                obs2Cycle = (obs2Cycle + 1) % (int)rectObs.size();
+            }
+            lastKey3 = now;
+        }
+
+        // T — spawn a new triangle obstacle at centre, auto-select
+        if (glfwGetKey(window, GLFW_KEY_T) == GLFW_PRESS && now - lastSpawn > 0.3) {
+            RenderShape* s = spawnTri(0.0f, 0.0f);
+            addToSel(s);
+            lastSpawn = now;
+        }
+        // Y — spawn a new rect obstacle at centre, auto-select
+        if (glfwGetKey(window, GLFW_KEY_Y) == GLFW_PRESS && now - lastSpawn > 0.3) {
+            RenderShape* s = spawnRect(0.0f, 0.0f);
+            addToSel(s);
+            lastSpawn = now;
+        }
+        // Delete — remove all selected dynamic obstacles
+        if (glfwGetKey(window, GLFW_KEY_DELETE) == GLFW_PRESS && now - lastDelete > 0.3) {
+            for (RenderShape* sel : selectedShapes) {
+                sel->selected = false;
+                // Remove from triObs if present
+                for (int i = (int)triObs.size()-1; i >= 0; i--) {
+                    if (triObs[i] == sel) { delete triObs[i]; triObs.erase(triObs.begin()+i); }
+                }
+                // Remove from rectObs if present
+                for (int i = (int)rectObs.size()-1; i >= 0; i--) {
+                    if (rectObs[i] == sel) { delete rectObs[i]; rectObs.erase(rectObs.begin()+i); }
+                }
+            }
+            selectedShapes.clear();
+            obs1Cycle = 0; obs2Cycle = 0;
+            lastDelete = now;
         }
         if (glfwGetKey(window, GLFW_KEY_4) == GLFW_PRESS && now - lastKey4 > 0.2) {
             addToSel(&hole); lastKey4 = now;
         }
 
-        if (!gameWon) processInput(window, selectedShapes);
+        if (!gameWon) processInput(window, selectedShapes, grassHW, grassHH);
 
         // ---- Collision detection (ball only) ----
         {
@@ -486,38 +542,32 @@ int main(int argc, char* argv[]) {
                 }
             }
 
-            // 3. Purple rect obstacles — use actual sx/sy in case player scaled them
-            float r2hw = (obs2W * 0.5f), r2hh = (obs2H * 0.5f);
-            for (RenderShape* obs : {&obs2a, &obs2b}) {
+            // 3. Purple rect obstacles
+            for (RenderShape* obs : rectObs) {
                 float px, py;
                 if (circleVsAABB(ball.tx, ball.ty, ballRadius,
                                   obs->tx, obs->ty,
-                                  r2hw * obs->sx, r2hh * obs->sy,
+                                  obs2W * 0.5f * obs->sx, obs2H * 0.5f * obs->sy,
                                   px, py)) {
                     ball.tx += px; ball.ty += py;
                 }
             }
 
             // 4. Orange triangle obstacles — exact triangle collision
-            //    Local vertices from makeTriangle(base=0.12, height=0.14):
-            //    (-0.06, -0.0467), (0.06, -0.0467), (0, 0.0933)
-            //    Rotated by shape's current rotation then translated to world position.
-            auto obsTriCollide = [&](RenderShape& obs) {
-                float ca = cosf(obs.rotation), sa = sinf(obs.rotation);
+            auto obsTriCollide = [&](RenderShape* obs) {
+                float ca = cosf(obs->rotation), sa = sinf(obs->rotation);
                 auto rot = [&](float lx, float ly, float& wx, float& wy) {
-                    wx = obs.tx + ca*lx - sa*ly;
-                    wy = obs.ty + sa*lx + ca*ly;
+                    wx = obs->tx + ca*lx - sa*ly;
+                    wy = obs->ty + sa*lx + ca*ly;
                 };
-                float hb = obs1Base * 0.5f;
-                float third = obs1Height / 3.0f;
+                float hb = obs1Base * 0.5f, third = obs1Height / 3.0f;
                 float ax, ay, bx, by, cx, cy;
                 rot(-hb, -third, ax, ay);
                 rot( hb, -third, bx, by);
                 rot(0,  2*third, cx, cy);
                 circleVsTriangle(ball.tx, ball.ty, ballRadius, ax, ay, bx, by, cx, cy);
             };
-            obsTriCollide(obs1a);
-            obsTriCollide(obs1b);
+            for (RenderShape* obs : triObs) obsTriCollide(obs);
 
             // 5. Hole — win condition, no push-out
             float dx = ball.tx - hole.tx, dy = ball.ty - hole.ty;
@@ -545,6 +595,14 @@ int main(int argc, char* argv[]) {
         glUseProgram(shaderID);
         glUniformMatrix3fv(projLoc, 1, GL_TRUE, projData);
 
+        // Rebuild scene each frame to include dynamic obstacles
+        vector<RenderShape*> scene;
+        scene.insert(scene.end(), sceneStatic.begin(), sceneStatic.end());
+        for (RenderShape* s : triObs)  scene.push_back(s);
+        scene.insert(scene.end(), sceneRiver.begin(), sceneRiver.end());
+        for (RenderShape* s : rectObs) scene.push_back(s);
+        scene.insert(scene.end(), sceneFg.begin(), sceneFg.end());
+
         for (RenderShape* s : scene)
             s->draw(modelLoc, colourLoc, wireframeMode);
 
@@ -562,7 +620,10 @@ int main(int argc, char* argv[]) {
         font.drawString("ENTER WIRE",  tx, ty,    cw, ch, fg, fg, fg, projData); ty -= ls;
         font.drawString("P  BRIDGE",   tx, ty,    cw, ch, fg, fg, fg, projData); ty -= ls;
         font.drawString("R  RESTART",  tx, ty,    cw, ch, fg, fg, fg, projData); ty -= ls;
-        font.drawString("F5 EXPORT",   tx, ty,    cw, ch, fg, fg, fg, projData); ty -= ls * 1.4f;
+        font.drawString("F5 EXPORT",   tx, ty,    cw, ch, fg, fg, fg, projData); ty -= ls;
+        font.drawString("T  NEW TRI",  tx, ty,    cw, ch, fg, fg, fg, projData); ty -= ls;
+        font.drawString("Y  NEW RECT", tx, ty,    cw, ch, fg, fg, fg, projData); ty -= ls;
+        font.drawString("DEL REMOVE",  tx, ty,    cw, ch, fg, fg, fg, projData); ty -= ls * 1.4f;
         font.drawString("SELECT:",     tx, ty,    cw, ch, fg, fg, fg, projData); ty -= ls;
         font.drawString("1  BALL",     tx, ty,    cw, ch, fg, fg, fg, projData); ty -= ls;
         font.drawString("2  TRI",      tx, ty,    cw, ch, fg, fg, fg, projData); ty -= ls;

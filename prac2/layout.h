@@ -4,157 +4,189 @@
 #include <fstream>
 #include <sstream>
 #include <string>
+#include <vector>
+#include <functional>
 #include <cstdio>
 #include "shapes.h"
 
 // ============================================================
-//  Simple JSON-like layout save/load
-//  Format (human-readable, hand-parsed):
+//  JSON layout save/load — supports variable-length obstacle arrays
+//
+//  Format:
 //  {
 //    "ball":  { "tx": 0.0, "ty": -0.65, "rotation": 0.0, "sx": 1.0, "sy": 1.0 },
-//    "hole":  { "tx": 0.0, "ty":  0.65, "rotation": 0.0, "sx": 1.0, "sy": 1.0 },
-//    "obs1a": { ... },
-//    "obs1b": { ... },
-//    "obs2a": { ... },
-//    "obs2b": { ... },
-//    "bridgeOpen": true
+//    "hole":  { ... },
+//    "bridgeOpen": true,
+//    "triangles": [
+//      { "tx": -0.2, "ty": -0.35, "rotation": 0.0, "sx": 1.0, "sy": 1.0 },
+//      ...
+//    ],
+//    "rects": [
+//      { "tx": -0.25, "ty": 0.35, "rotation": 0.0, "sx": 1.0, "sy": 1.0 },
+//      ...
+//    ]
 //  }
 // ============================================================
 
-struct Layout {
-    struct ShapeState {
-        float tx, ty, rotation, sx, sy;
-    };
-    ShapeState ball, hole, obs1a, obs1b, obs2a, obs2b;
-    bool bridgeOpen;
-};
+struct ShapeState { float tx, ty, rotation, sx, sy; };
 
-static std::string shapeToJson(const char* name, const Layout::ShapeState& s, bool last = false) {
-    char buf[256];
+static ShapeState snapShape(const RenderShape& s) {
+    return { s.tx, s.ty, s.rotation, s.sx, s.sy };
+}
+
+static std::string shapeJson(const ShapeState& s) {
+    char buf[200];
     snprintf(buf, sizeof(buf),
-        "  \"%s\": { \"tx\": %.6f, \"ty\": %.6f, \"rotation\": %.6f, \"sx\": %.6f, \"sy\": %.6f }%s\n",
-        name, s.tx, s.ty, s.rotation, s.sx, s.sy, last ? "" : ",");
+        "{ \"tx\": %.6f, \"ty\": %.6f, \"rotation\": %.6f, \"sx\": %.6f, \"sy\": %.6f }",
+        s.tx, s.ty, s.rotation, s.sx, s.sy);
     return buf;
 }
 
 inline bool exportLayout(const char* filename,
                          const RenderShape& ball,
                          const RenderShape& hole,
-                         const RenderShape& obs1a,
-                         const RenderShape& obs1b,
-                         const RenderShape& obs2a,
-                         const RenderShape& obs2b,
+                         const std::vector<RenderShape*>& triObs,
+                         const std::vector<RenderShape*>& rectObs,
                          bool bridgeOpen)
 {
     std::ofstream f(filename);
     if (!f.is_open()) return false;
 
-    auto snap = [](const RenderShape& s) -> Layout::ShapeState {
-        return { s.tx, s.ty, s.rotation, s.sx, s.sy };
-    };
-
     f << "{\n";
-    f << shapeToJson("ball",  snap(ball));
-    f << shapeToJson("hole",  snap(hole));
-    f << shapeToJson("obs1a", snap(obs1a));
-    f << shapeToJson("obs1b", snap(obs1b));
-    f << shapeToJson("obs2a", snap(obs2a));
-    f << shapeToJson("obs2b", snap(obs2b));
-    f << "  \"bridgeOpen\": " << (bridgeOpen ? "true" : "false") << "\n";
+    f << "  \"ball\": "  << shapeJson(snapShape(ball))  << ",\n";
+    f << "  \"hole\": "  << shapeJson(snapShape(hole))  << ",\n";
+    f << "  \"bridgeOpen\": " << (bridgeOpen ? "true" : "false") << ",\n";
+
+    f << "  \"triangles\": [\n";
+    for (int i = 0; i < (int)triObs.size(); i++) {
+        f << "    " << shapeJson(snapShape(*triObs[i]));
+        f << (i + 1 < (int)triObs.size() ? "," : "") << "\n";
+    }
+    f << "  ],\n";
+
+    f << "  \"rects\": [\n";
+    for (int i = 0; i < (int)rectObs.size(); i++) {
+        f << "    " << shapeJson(snapShape(*rectObs[i]));
+        f << (i + 1 < (int)rectObs.size() ? "," : "") << "\n";
+    }
+    f << "  ]\n";
     f << "}\n";
+
     f.close();
     return true;
 }
 
-// Minimal JSON float/bool parser — no dependencies
-static bool parseField(const std::string& line, const char* key, float& out) {
+// ---- Parser helpers ----
+
+static bool parseFloat(const std::string& s, const char* key, float& out) {
     std::string k = std::string("\"") + key + "\":";
-    size_t pos = line.find(k);
+    size_t pos = s.find(k);
     if (pos == std::string::npos) return false;
     pos += k.size();
-    while (pos < line.size() && (line[pos] == ' ')) pos++;
-    out = strtof(line.c_str() + pos, nullptr);
+    while (pos < s.size() && s[pos] == ' ') pos++;
+    out = strtof(s.c_str() + pos, nullptr);
     return true;
 }
 
-static bool parseBool(const std::string& line, const char* key, bool& out) {
+static bool parseBoolField(const std::string& s, const char* key, bool& out) {
     std::string k = std::string("\"") + key + "\":";
-    size_t pos = line.find(k);
+    size_t pos = s.find(k);
     if (pos == std::string::npos) return false;
     pos += k.size();
-    while (pos < line.size() && line[pos] == ' ') pos++;
-    out = (line.substr(pos, 4) == "true");
+    while (pos < s.size() && s[pos] == ' ') pos++;
+    out = (s.substr(pos, 4) == "true");
     return true;
 }
 
-// Parse a shape block like: "name": { "tx": ..., "ty": ..., ... }
-// Reads the entire file content and finds the named block.
-static bool parseShape(const std::string& content, const char* name, Layout::ShapeState& s) {
+static ShapeState parseShapeBlock(const std::string& block) {
+    ShapeState s = {0,0,0,1,1};
+    parseFloat(block, "tx",       s.tx);
+    parseFloat(block, "ty",       s.ty);
+    parseFloat(block, "rotation", s.rotation);
+    parseFloat(block, "sx",       s.sx);
+    parseFloat(block, "sy",       s.sy);
+    return s;
+}
+
+// Parse a named single-object field: "key": { ... }
+static bool parseNamedShape(const std::string& content, const char* name, ShapeState& out) {
     std::string key = std::string("\"") + name + "\"";
-    size_t start = content.find(key);
-    if (start == std::string::npos) return false;
-    size_t open = content.find('{', start);
+    size_t pos = content.find(key);
+    if (pos == std::string::npos) return false;
+    size_t open  = content.find('{', pos);
     size_t close = content.find('}', open);
     if (open == std::string::npos || close == std::string::npos) return false;
-    std::string block = content.substr(open, close - open + 1);
-
-    // Default values in case a field is missing
-    s = {0,0,0,1,1};
-    parseField(block, "tx",       s.tx);
-    parseField(block, "ty",       s.ty);
-    parseField(block, "rotation", s.rotation);
-    parseField(block, "sx",       s.sx);
-    parseField(block, "sy",       s.sy);
+    out = parseShapeBlock(content.substr(open, close - open + 1));
     return true;
 }
 
-inline bool importLayout(const char* filename, Layout& out) {
+// Parse a named array field: "key": [ { ... }, { ... } ]
+static std::vector<ShapeState> parseNamedArray(const std::string& content, const char* name) {
+    std::vector<ShapeState> result;
+    std::string key = std::string("\"") + name + "\"";
+    size_t pos = content.find(key);
+    if (pos == std::string::npos) return result;
+    size_t arrOpen = content.find('[', pos);
+    size_t arrClose = content.find(']', arrOpen);
+    if (arrOpen == std::string::npos || arrClose == std::string::npos) return result;
+    std::string arr = content.substr(arrOpen, arrClose - arrOpen + 1);
+    // Walk through { } blocks inside the array
+    size_t cur = 0;
+    while (true) {
+        size_t open = arr.find('{', cur);
+        if (open == std::string::npos) break;
+        size_t close = arr.find('}', open);
+        if (close == std::string::npos) break;
+        result.push_back(parseShapeBlock(arr.substr(open, close - open + 1)));
+        cur = close + 1;
+    }
+    return result;
+}
+
+static void applyState(RenderShape& s, const ShapeState& st) {
+    s.tx = st.tx; s.ty = st.ty;
+    s.rotation = st.rotation;
+    s.sx = st.sx; s.sy = st.sy;
+}
+
+inline bool importLayout(const char* filename,
+                         RenderShape& ball,
+                         RenderShape& hole,
+                         std::vector<RenderShape*>& triObs,
+                         std::vector<RenderShape*>& rectObs,
+                         bool& bridgeOpen,
+                         // spawn callbacks — caller provides these
+                         std::function<RenderShape*(float,float)> spawnTri,
+                         std::function<RenderShape*(float,float)> spawnRect)
+{
     std::ifstream f(filename);
     if (!f.is_open()) return false;
-
-    std::ostringstream ss;
-    ss << f.rdbuf();
+    std::ostringstream ss; ss << f.rdbuf();
     std::string content = ss.str();
     f.close();
 
-    if (!parseShape(content, "ball",  out.ball))  return false;
-    if (!parseShape(content, "hole",  out.hole))  return false;
-    if (!parseShape(content, "obs1a", out.obs1a)) return false;
-    if (!parseShape(content, "obs1b", out.obs1b)) return false;
-    if (!parseShape(content, "obs2a", out.obs2a)) return false;
-    if (!parseShape(content, "obs2b", out.obs2b)) return false;
+    ShapeState ballSt, holeSt;
+    if (!parseNamedShape(content, "ball", ballSt)) return false;
+    if (!parseNamedShape(content, "hole", holeSt)) return false;
+    applyState(ball, ballSt);
+    applyState(hole, holeSt);
 
-    out.bridgeOpen = true; // default
-    // Find bridgeOpen outside any shape block
-    size_t pos = content.rfind("\"bridgeOpen\"");
-    if (pos != std::string::npos) {
-        std::string tail = content.substr(pos);
-        parseBool(tail, "bridgeOpen", out.bridgeOpen);
+    parseBoolField(content, "bridgeOpen", bridgeOpen);
+
+    // Clear and rebuild obstacle pools
+    for (RenderShape* s : triObs)  delete s;
+    for (RenderShape* s : rectObs) delete s;
+    triObs.clear(); rectObs.clear();
+
+    for (auto& st : parseNamedArray(content, "triangles")) {
+        RenderShape* s = spawnTri(st.tx, st.ty);
+        s->rotation = st.rotation; s->sx = st.sx; s->sy = st.sy;
+    }
+    for (auto& st : parseNamedArray(content, "rects")) {
+        RenderShape* s = spawnRect(st.tx, st.ty);
+        s->rotation = st.rotation; s->sx = st.sx; s->sy = st.sy;
     }
     return true;
-}
-
-inline void applyLayout(const Layout& layout,
-                        RenderShape& ball,
-                        RenderShape& hole,
-                        RenderShape& obs1a,
-                        RenderShape& obs1b,
-                        RenderShape& obs2a,
-                        RenderShape& obs2b,
-                        bool& bridgeOpen)
-{
-    auto apply = [](RenderShape& s, const Layout::ShapeState& st) {
-        s.tx = st.tx; s.ty = st.ty;
-        s.rotation = st.rotation;
-        s.sx = st.sx; s.sy = st.sy;
-    };
-    apply(ball,  layout.ball);
-    apply(hole,  layout.hole);
-    apply(obs1a, layout.obs1a);
-    apply(obs1b, layout.obs1b);
-    apply(obs2a, layout.obs2a);
-    apply(obs2b, layout.obs2b);
-    bridgeOpen = layout.bridgeOpen;
 }
 
 #endif
