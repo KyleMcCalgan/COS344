@@ -365,3 +365,56 @@ all:
 - [ ] W/S/A/D translate, +/- scale, Q/E rotate work cumulatively
 - [ ] Enter toggles wireframe (GL_LINES, colours preserved, transforms respected)
 - [ ] Submitted as archive to ClickUP before 23-03-2026 10:00
+
+---
+
+## 15. Rubric Assessment (as of 22-03-2026)
+
+### Gaps / Risks
+
+#### Layout [30 marks]
+- **Three obstacle types** — only 2 exist (orange triangles + purple rects). A **third distinct obstacle type** is needed for full marks.
+- **Golf hole / ball shape** — both are circles, should be correct visually.
+
+#### Shape Requirements [12 marks]
+- Two distinct circles: 8-segment ball (low poly) + 60-segment hole (high poly) ✓
+- Two distinct triangles: river bank triangles + obstacle triangles ✓
+- Two distinct rectangles: many exist ✓
+
+#### Colour [18 marks]
+- **Three distinct obstacle colours** — only 2 (orange, purple). Adding a third obstacle type fixes this simultaneously.
+- All other colours present and distinct ✓
+
+#### Selection [18 marks]
+- Keys 1–4 correct, pastel highlight works, 0 deselects ✓
+- Should be full marks.
+
+#### Transformation [20 marks]
+- All transforms work on all selectable shapes ✓
+- No centre-reset between transforms ✓
+
+#### Wireframe [12 marks]
+- ENTER toggles wireframe, applies to all shapes including obstacles ✓
+
+### What to Fix
+
+| Priority | Issue | Marks at stake |
+|---|---|---|
+| **High** | Add a **third obstacle type** | Fixes Layout + Colour = up to **6 marks** |
+
+### Bonus Status
+
+| Bonus | Status |
+|---|---|
+| Multi-select (Ctrl) | Done |
+| Bounds checking (ball off-screen) | Done |
+| Ball collision with obstacles | Done |
+| Dynamic add/remove (T/Y/Delete) | Done |
+| Extra detail on ball (soccer spots) | Done |
+| Save layout (F5) | Done |
+| Load layout (--import) | Done |
+| Click to select | Not done |
+| Screenshot via OpenGL | Not done |
+| Ball bouncing off obstacles | Not done (push-out only, no velocity) |
+
+7 of 10 bonus features implemented — already at the 10-mark cap if all are accepted.
