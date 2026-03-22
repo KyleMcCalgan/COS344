@@ -29,6 +29,12 @@ std::vector<float> makeTriangle(float base, float height);
 // Triangle wireframe: 3 edges as GL_LINES
 std::vector<float> makeTriangleWire(float base, float height);
 
+// Hexagon: flat-top regular hexagon of radius r (GL_TRIANGLES)
+std::vector<float> makeHexagon(float r);
+
+// Hexagon wireframe: 6 edges as GL_LINES
+std::vector<float> makeHexagonWire(float r);
+
 // ============================================================
 //  RenderShape — one drawable object
 // ============================================================
@@ -109,6 +115,29 @@ inline std::vector<float> makeTriangleWire(float base, float height) {
     return { -hb,-third,  hb,-third,
               hb,-third,  0, 2*third,
               0, 2*third, -hb,-third };
+}
+
+inline std::vector<float> makeHexagon(float r) {
+    std::vector<float> v;
+    for (int i = 0; i < 6; i++) {
+        float a0 = 2.0f * M_PI * i / 6.0f;
+        float a1 = 2.0f * M_PI * (i+1) / 6.0f;
+        v.push_back(0);          v.push_back(0);
+        v.push_back(r*cosf(a0)); v.push_back(r*sinf(a0));
+        v.push_back(r*cosf(a1)); v.push_back(r*sinf(a1));
+    }
+    return v;
+}
+
+inline std::vector<float> makeHexagonWire(float r) {
+    std::vector<float> v;
+    for (int i = 0; i < 6; i++) {
+        float a0 = 2.0f * M_PI * i / 6.0f;
+        float a1 = 2.0f * M_PI * (i+1) / 6.0f;
+        v.push_back(r*cosf(a0)); v.push_back(r*sinf(a0));
+        v.push_back(r*cosf(a1)); v.push_back(r*sinf(a1));
+    }
+    return v;
 }
 
 inline void RenderShape::init(std::vector<float> verts, std::vector<float> wireVerts,

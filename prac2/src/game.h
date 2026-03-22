@@ -36,6 +36,7 @@ struct GameState {
     double lastKey1 = 0, lastKey2 = 0, lastKey3 = 0, lastKey4 = 0;
     double lastSpawn = 0, lastDelete = 0, lastToggle = 0;
     double lastBridgeToggle = 0;
+    float  logTime = 0.0f;          // accumulates real time for log animation
 
 ////////////////////////////////////////////////////////////////////////////////////////
 //bridge animation constants - derived from scene rampTilt on startup
@@ -194,6 +195,31 @@ struct GameState {
     }
 
 ////////////////////////////////////////////////////////////////////////////////////////
+//updateLogs - animate the two floating hexagonal log stumps in the river
+//  - drift rightward and wrap around to the left edge of the grass
+//  - bob vertically with a sine wave (phase-offset between the two logs)
+////////////////////////////////////////////////////////////////////////////////////////
+    void updateLogs(Scene& sc, float dt) {
+        const float driftSpeed = 0.04f;          // NDC units per second
+        const float bobAmp     = 0.006f;        // bob amplitude in NDC
+        const float bobFreq    = 0.4f;          // bobs per second
+        // wrap triggers once the log has fully cleared the right edge
+        const float exitRight  =  sc.grassHW + sc.logRadius;
+        const float spawnLeft  = -sc.grassHW - sc.logRadius;
+        const float width      = exitRight - spawnLeft;
+
+        logTime += dt;
+
+        sc.log1.tx += driftSpeed * dt;
+        if (sc.log1.tx > exitRight) sc.log1.tx -= width;
+        sc.log1.ty = sc.logBaseY + bobAmp * sinf(bobFreq * 2.0f * M_PI * logTime);
+
+        sc.log2.tx += driftSpeed * dt;
+        if (sc.log2.tx > exitRight) sc.log2.tx -= width;
+        sc.log2.ty = sc.logBaseY + bobAmp * sinf(bobFreq * 2.0f * M_PI * logTime + M_PI);
+    }
+
+////////////////////////////////////////////////////////////////////////////////////////
 //updateCollision - run all collision responses for the ball each frame
 ////////////////////////////////////////////////////////////////////////////////////////
     void updateCollision(Scene& sc) {
@@ -213,7 +239,15 @@ struct GameState {
             circleVsTriangle(ball.tx, ball.ty, sc.ballRadius,
                               sc.grassHW, -hb,   sc.grassHW,  hb, -tipX,  0.0f);
 
-            if (bridgeOpen) {
+            // Ball can cross river if it is standing on a floating log
+            auto onLog = [&](const RenderShape& log) {
+                float dx = ball.tx - log.tx, dy = ball.ty - log.ty;
+                float threshold = sc.ballRadius + sc.logRadius;
+                return dx*dx + dy*dy < threshold * threshold;
+            };
+            bool ridingLog = onLog(sc.log1) || onLog(sc.log2);
+
+            if (bridgeOpen && !ridingLog) {
                 float px, py;
                 if (circleVsAABB(ball.tx, ball.ty, sc.ballRadius,
                                  0.0f, sc.riverY, -tipX, sc.riverH * 0.5f, px, py))

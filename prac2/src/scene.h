@@ -66,6 +66,18 @@ struct Scene {
     RenderShape hole, ball;
     RenderShape spot1, spot2, spot3, spot4, spot5;
 
+    // Floating log stumps (grey hexagons in river)
+    RenderShape log1, log2;
+    const float logRadius = 0.07f;
+    const float logBaseY  = riverY;        // centre of river
+    const float log1StartX = -0.275f;
+    const float log2StartX =  0.275f;
+
+    // River-edge masks: charcoal rectangles that hide logs outside the grass area
+    RenderShape riverMaskL, riverMaskR;
+    const float maskW = 0.5f;   // wide enough to cover from grass edge to screen edge
+    const float maskH = 0.3f;   // tall enough to fully cover a bobbing log
+
     std::vector<RenderShape*> triObs;   // orange triangle obstacles (dynamic)
     std::vector<RenderShape*> rectObs;  // purple rect obstacles     (dynamic)
 
@@ -125,11 +137,30 @@ struct Scene {
         spot4.init(makeCircle(spotR, 6), makeCircleWire(spotR, 6), spotCol, spotCol, false, 0);
         spot5.init(makeCircle(spotR, 6), makeCircleWire(spotR, 6), spotCol, spotCol, false, 0);
 
+        // Floating hexagonal log stumps (grey, non-selectable)
+        glm::vec3 logCol(0.6f, 0.6f, 0.6f);
+        log1.init(makeHexagon(logRadius), makeHexagonWire(logRadius),
+                  logCol, logCol, false, 0, log1StartX, logBaseY);
+        log2.init(makeHexagon(logRadius), makeHexagonWire(logRadius),
+                  logCol, logCol, false, 0, log2StartX, logBaseY);
+
+        // River-edge mask rectangles — same colour as background, hide logs outside grass
+        glm::vec3 maskCol(0.15f, 0.15f, 0.15f);
+        std::vector<float> maskVerts = makeRect(maskW, maskH);
+        std::vector<float> maskWire;  // no wireframe needed
+        float maskLX = -(grassHW + maskW * 0.5f);
+        float maskRX =  (grassHW + maskW * 0.5f);
+        riverMaskL.init(maskVerts, maskWire, maskCol, maskCol, false, 0, maskLX, riverY);
+        riverMaskR.init(maskVerts, maskWire, maskCol, maskCol, false, 0, maskRX, riverY);
+
         spawnDefaultObstacles();
 
         sceneStatic = { &floor, &grass, &startPad };
-        sceneRiver  = { &river, &riverTriL, &riverTriR, &rampBottom, &rampTop };
-        sceneFg     = { &borderN, &borderS, &borderE, &borderW,
+        sceneRiver  = { &river, &riverTriL, &riverTriR,
+                        &log1, &log2,
+                        &rampBottom, &rampTop };
+        sceneFg     = { &riverMaskL, &riverMaskR,
+                        &borderN, &borderS, &borderE, &borderW,
                         &hole,
                         &ball, &spot1, &spot2, &spot3, &spot4, &spot5 };
     }

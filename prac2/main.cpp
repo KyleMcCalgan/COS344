@@ -68,6 +68,7 @@ int main(int argc, char* argv[]) {
 
         gs.handleKeys(window, sc, now, dt);
         gs.updateBridge(sc, dt);
+        gs.updateLogs(sc, dt);
         gs.updateCollision(sc);
         gs.syncSpots(sc);
 
