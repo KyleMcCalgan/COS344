@@ -1,0 +1,1263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>COS 344 — Lecture Notes</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:       #f5f0eb;
+    --surface:  #fdf9f5;
+    --card:     #ffffff;
+    --border:   #e8e0d6;
+    --muted:    #c8bfb4;
+
+    --sage:     #8faa8b;
+    --sage-lt:  #d4e2d2;
+    --rose:     #c9827a;
+    --rose-lt:  #f0d8d6;
+    --sky:      #7aa0b5;
+    --sky-lt:   #d2e4ef;
+    --amber:    #c9a25a;
+    --amber-lt: #f0e4c8;
+    --lavender: #9b8fc0;
+    --lav-lt:   #e2dcf3;
+    --coral:    #c48060;
+    --coral-lt: #f0ddd3;
+
+    --text:     #3a3228;
+    --text-2:   #6b5e52;
+    --text-3:   #9a8e84;
+
+    --radius:   14px;
+    --radius-sm: 8px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    line-height: 1.65;
+    padding: 0 0 80px;
+  }
+
+  /* ── Header ── */
+  .header {
+    background: var(--surface);
+    border-bottom: 1.5px solid var(--border);
+    padding: 20px 18px 16px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .header-eyebrow {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--text-3);
+    margin-bottom: 4px;
+  }
+  .header-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 22px;
+    color: var(--text);
+    line-height: 1.2;
+  }
+  .header-sub {
+    font-size: 12px;
+    color: var(--text-3);
+    margin-top: 4px;
+  }
+
+  /* ── TOC ── */
+  .toc {
+    background: var(--card);
+    margin: 14px 14px 0;
+    border-radius: var(--radius);
+    border: 1.5px solid var(--border);
+    overflow: hidden;
+  }
+  .toc-header {
+    padding: 12px 16px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--text-3);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+  }
+  .toc-arrow { transition: transform .2s; }
+  .toc.open .toc-arrow { transform: rotate(180deg); }
+  .toc-list { display: none; padding: 8px 0; }
+  .toc.open .toc-list { display: block; }
+  .toc-item {
+    display: block;
+    padding: 7px 16px;
+    font-size: 13.5px;
+    color: var(--text-2);
+    text-decoration: none;
+    border-left: 3px solid transparent;
+    transition: all .15s;
+  }
+  .toc-item:active { background: var(--bg); border-left-color: var(--sage); color: var(--text); }
+  .toc-num { color: var(--text-3); font-size: 11px; margin-right: 6px; font-variant-numeric: tabular-nums; }
+
+  /* ── Lecture sections ── */
+  .lecture {
+    margin: 14px 14px 0;
+  }
+  .lecture-header {
+    border-radius: var(--radius) var(--radius) 0 0;
+    padding: 14px 16px 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .lecture-num {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    opacity: .7;
+    white-space: nowrap;
+  }
+  .lecture-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 17px;
+    line-height: 1.25;
+    flex: 1;
+  }
+  .lecture-chevron {
+    font-size: 14px;
+    opacity: .6;
+    transition: transform .2s;
+    flex-shrink: 0;
+  }
+  .lecture.open .lecture-chevron { transform: rotate(180deg); }
+  .lecture-body {
+    display: none;
+    background: var(--card);
+    border: 1.5px solid var(--border);
+    border-top: none;
+    border-radius: 0 0 var(--radius) var(--radius);
+    padding: 16px;
+  }
+  .lecture.open .lecture-body { display: block; }
+
+  /* Colour themes per lecture */
+  .lec-1 .lecture-header { background: var(--sage-lt); border: 1.5px solid #b8d4b5; }
+  .lec-2 .lecture-header { background: var(--sky-lt); border: 1.5px solid #aecbdc; }
+  .lec-3 .lecture-header { background: var(--rose-lt); border: 1.5px solid #d8b0ac; }
+  .lec-4 .lecture-header { background: var(--amber-lt); border: 1.5px solid #d8c090; }
+  .lec-5 .lecture-header { background: var(--lav-lt); border: 1.5px solid #c0b8e0; }
+  .lec-7 .lecture-header { background: var(--coral-lt); border: 1.5px solid #d4a890; }
+  .lec-8 .lecture-header { background: var(--sage-lt); border: 1.5px solid #b8d4b5; }
+  .lec-9 .lecture-header { background: var(--sky-lt); border: 1.5px solid #aecbdc; }
+  .lec-10 .lecture-header { background: var(--rose-lt); border: 1.5px solid #d8b0ac; }
+
+  /* ── Section headings ── */
+  .section-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 16px;
+    color: var(--text);
+    margin: 20px 0 8px;
+    padding-bottom: 6px;
+    border-bottom: 1.5px solid var(--border);
+  }
+  .section-title:first-child { margin-top: 0; }
+
+  .subsection-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-2);
+    margin: 14px 0 6px;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+  }
+
+  p { margin-bottom: 10px; color: var(--text); }
+  p:last-child { margin-bottom: 0; }
+
+  /* ── Concept cards ── */
+  .concept {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 12px 14px;
+    margin: 10px 0;
+  }
+  .concept-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--text-3);
+    margin-bottom: 6px;
+  }
+  .concept-name {
+    font-weight: 600;
+    font-size: 15px;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+  .concept-desc { font-size: 13.5px; color: var(--text-2); }
+
+  /* ── Examples ── */
+  .example {
+    background: #f9f6f0;
+    border-left: 3px solid var(--amber);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    padding: 10px 12px;
+    margin: 8px 0;
+    font-size: 13.5px;
+  }
+  .example-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--amber);
+    margin-bottom: 4px;
+  }
+
+  /* ── Code blocks ── */
+  pre, code {
+    font-family: 'DM Mono', monospace;
+  }
+  pre {
+    background: #2e2820;
+    color: #e8ddd0;
+    border-radius: var(--radius-sm);
+    padding: 12px 14px;
+    margin: 10px 0;
+    font-size: 12px;
+    line-height: 1.6;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  code {
+    background: #ede8e0;
+    color: #5a3e28;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 12.5px;
+  }
+
+  /* ── Formula pill ── */
+  .formula {
+    background: var(--lav-lt);
+    border: 1.5px solid #c0b8e0;
+    border-radius: var(--radius-sm);
+    padding: 10px 14px;
+    margin: 10px 0;
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    color: #3a2a60;
+    line-height: 1.7;
+  }
+
+  /* ── Tables ── */
+  .table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin: 10px 0;
+    border-radius: var(--radius-sm);
+    border: 1.5px solid var(--border);
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    min-width: 280px;
+  }
+  th {
+    background: var(--bg);
+    font-weight: 600;
+    text-align: left;
+    padding: 9px 12px;
+    color: var(--text-2);
+    border-bottom: 1.5px solid var(--border);
+    font-size: 12px;
+    letter-spacing: .04em;
+  }
+  td {
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+    color: var(--text);
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:nth-child(even) td { background: #faf7f3; }
+
+  /* ── Lists ── */
+  ul, ol {
+    padding-left: 20px;
+    margin: 8px 0;
+  }
+  li { margin-bottom: 5px; font-size: 14px; color: var(--text-2); }
+  li strong { color: var(--text); }
+
+  /* ── Pill tags ── */
+  .tag {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 20px;
+    margin: 2px 2px 2px 0;
+  }
+  .tag-sage { background: var(--sage-lt); color: #3a5c38; }
+  .tag-sky  { background: var(--sky-lt); color: #1e4a62; }
+  .tag-rose { background: var(--rose-lt); color: #6e2e28; }
+
+  /* ── Info box ── */
+  .info-box {
+    background: var(--sky-lt);
+    border: 1.5px solid #aecbdc;
+    border-radius: var(--radius-sm);
+    padding: 10px 14px;
+    margin: 10px 0;
+    font-size: 13.5px;
+    color: #1e4a62;
+  }
+  .warn-box {
+    background: var(--rose-lt);
+    border: 1.5px solid #d8b0ac;
+    border-radius: var(--radius-sm);
+    padding: 10px 14px;
+    margin: 10px 0;
+    font-size: 13.5px;
+    color: #6e2e28;
+  }
+
+  /* ── Divider ── */
+  hr { border: none; border-top: 1px solid var(--border); margin: 14px 0; }
+
+  strong { font-weight: 600; color: var(--text); }
+  em { color: var(--text-2); }
+
+  /* ── scroll top button ── */
+  #top-btn {
+    position: fixed;
+    bottom: 20px;
+    right: 16px;
+    background: var(--text);
+    color: var(--bg);
+    border: none;
+    border-radius: 50%;
+    width: 44px;
+    height: 44px;
+    font-size: 18px;
+    cursor: pointer;
+    box-shadow: 0 3px 12px rgba(0,0,0,.18);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+  }
+  #top-btn.visible { display: flex; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-eyebrow">COS 344 · Computer Graphics</div>
+  <div class="header-title">Lecture Notes</div>
+  <div class="header-sub">Marschner &amp; Shirley · C++ / OpenGL 3.3</div>
+</div>
+
+<!-- TOC -->
+<div class="toc" id="toc">
+  <div class="toc-header" onclick="toggleToc()">
+    Contents
+    <span class="toc-arrow">▼</span>
+  </div>
+  <div class="toc-list">
+    <a class="toc-item" href="#lec1"><span class="toc-num">L1</span> Introduction to Computer Graphics</a>
+    <a class="toc-item" href="#lec2"><span class="toc-num">L2</span> Raster Images</a>
+    <a class="toc-item" href="#lec3"><span class="toc-num">L3</span> Ray Tracing</a>
+    <a class="toc-item" href="#lec4"><span class="toc-num">L4</span> Surface Shading</a>
+    <a class="toc-item" href="#lec5"><span class="toc-num">L5–6</span> Graphics Hardware</a>
+    <a class="toc-item" href="#lec7"><span class="toc-num">L7</span> 2D Transformations</a>
+    <a class="toc-item" href="#lec8"><span class="toc-num">L8</span> 3D Transformations</a>
+    <a class="toc-item" href="#lec9"><span class="toc-num">L9</span> The Graphics Pipeline</a>
+    <a class="toc-item" href="#lec10"><span class="toc-num">L10</span> Data Structures</a>
+  </div>
+</div>
+
+<!-- ═══════════ LECTURE 1 ═══════════ -->
+<div class="lecture lec-1 open" id="lec1">
+  <div class="lecture-header" onclick="toggleLecture(this)">
+    <span class="lecture-num">Lecture 1 · Ch. 1</span>
+    <span class="lecture-title">Introduction to Computer Graphics</span>
+    <span class="lecture-chevron">▾</span>
+  </div>
+  <div class="lecture-body">
+
+    <div class="section-title">1.1 The Three Major Areas</div>
+
+    <div class="concept">
+      <div class="concept-label">Area 1</div>
+      <div class="concept-name">Modelling</div>
+      <div class="concept-desc">Mathematical specification of objects and their appearance — defining what an object looks like before rendering.</div>
+    </div>
+    <div class="example">
+      <div class="example-label">Example</div>
+      A 3D cube described as 8 vertices connected by 12 edges, with surface normals and material properties.
+    </div>
+
+    <div class="concept">
+      <div class="concept-label">Area 2</div>
+      <div class="concept-name">Rendering</div>
+      <div class="concept-desc">The process of producing a 2D image from a scene description.</div>
+    </div>
+    <div class="example">
+      <div class="example-label">Example</div>
+      Taking the cube model and computing which pixels it occupies on screen, accounting for lighting.
+    </div>
+
+    <div class="concept">
+      <div class="concept-label">Area 3</div>
+      <div class="concept-name">Animation</div>
+      <div class="concept-desc">Creating the illusion of motion through a sequence of rendered images.</div>
+    </div>
+    <div class="example">
+      <div class="example-label">Example</div>
+      Rotating the cube by 5° per frame to produce a spinning animation at 24 fps.
+    </div>
+
+    <p style="margin-top:10px; font-size:13.5px; color:var(--text-3);">Additional sub-areas: user interaction, visualisation, image processing.</p>
+
+    <hr>
+    <div class="section-title">1.2 Major Applications</div>
+    <div class="table-wrap">
+      <table>
+        <tr><th>Domain</th><th>Example</th></tr>
+        <tr><td><strong>Video games</strong></td><td>Real-time 3D (Baldur's Gate 3)</td></tr>
+        <tr><td><strong>Cartoons &amp; film</strong></td><td>CGI / Pixar movies</td></tr>
+        <tr><td><strong>CAD/CAM</strong></td><td>Engineering &amp; architecture design</td></tr>
+        <tr><td><strong>Medical imaging</strong></td><td>MRI and CT scan visualisation</td></tr>
+        <tr><td><strong>Simulations</strong></td><td>Physics-based training</td></tr>
+        <tr><td><strong>Info visualisation</strong></td><td>Data dashboards, scientific plots</td></tr>
+      </table>
+    </div>
+
+    <hr>
+    <div class="section-title">1.3 Graphics APIs</div>
+    <p>A <strong>Graphics API</strong> is a set of functions to perform basic rendering operations.</p>
+    <p>Programs rely on two APIs:</p>
+    <ul>
+      <li><strong>Graphics API</strong> — for drawing (e.g., OpenGL, Direct3D)</li>
+      <li><strong>UI API</strong> — for input handling</li>
+    </ul>
+
+    <div class="subsection-title">Two Paradigms</div>
+    <div class="concept">
+      <div class="concept-name">Integrated</div>
+      <div class="concept-desc">Graphics and UI built into the language. <em>Example: Java Swing.</em></div>
+    </div>
+    <div class="concept">
+      <div class="concept-name">Library-based</div>
+      <div class="concept-desc">Graphics and UI are separate libraries. <em>Example: OpenGL + GLFW with C++.</em></div>
+    </div>
+    <div class="info-box">COS 344 uses <strong>OpenGL 3.3</strong> via C++.</div>
+
+    <hr>
+    <div class="section-title">1.4 The Graphics Pipeline</div>
+    <p>Modern GPUs contain an optimised rendering pipeline that performs:</p>
+    <div class="concept"><div class="concept-name">① Map 3D → 2D</div><div class="concept-desc">Project 3D world-space positions onto the flat screen.</div></div>
+    <div class="concept"><div class="concept-name">② Shade polygons</div><div class="concept-desc">Compute how light interacts with surfaces to produce realistic colour.</div></div>
+    <div class="concept"><div class="concept-name">③ Render in correct order</div><div class="concept-desc">Determine which surfaces are visible and which are hidden.</div></div>
+    <p style="font-size:13px; color:var(--text-3);">Covered in depth in Chapter 9.</p>
+  </div>
+</div>
+
+<!-- ═══════════ LECTURE 2 ═══════════ -->
+<div class="lecture lec-2" id="lec2">
+  <div class="lecture-header" onclick="toggleLecture(this)">
+    <span class="lecture-num">Lecture 2 · Ch. 3</span>
+    <span class="lecture-title">Raster Images</span>
+    <span class="lecture-chevron">▾</span>
+  </div>
+  <div class="lecture-body">
+
+    <div class="section-title">3.1 Raster vs. Vector</div>
+
+    <div class="concept">
+      <div class="concept-name">Raster Image</div>
+      <div class="concept-desc">A rectangular 2D array of pixels. Each pixel stores an RGB colour value.</div>
+    </div>
+    <div class="table-wrap"><table>
+      <tr><th></th><th>Raster</th><th>Vector</th></tr>
+      <tr><td><strong>Storage</strong></td><td>Pixels (RGB array)</td><td>Shape descriptions</td></tr>
+      <tr><td><strong>Pro</strong></td><td>Fast to display, hardware-native</td><td>Resolution-independent</td></tr>
+      <tr><td><strong>Con</strong></td><td>Aliasing when zoomed</td><td>Must be rasterised first</td></tr>
+    </table></div>
+    <div class="example">
+      <div class="example-label">Raster Example</div>
+      A 1920×1080 image is a 2D array: 1920 columns × 1080 rows. Each cell holds an RGB triple.
+    </div>
+    <div class="example">
+      <div class="example-label">Vector Example</div>
+      An SVG circle: <code>&lt;circle cx="100" cy="100" r="50"/&gt;</code> — no pixels stored.
+    </div>
+
+    <hr>
+    <div class="section-title">3.2 Images, Pixels, and Geometry</div>
+
+    <div class="formula">I(x, y) : R → V<br>where R ⊂ ℝ² and V is the set of pixel values</div>
+
+    <p><strong>Pixel coordinates</strong> use <code>(i, j)</code> where <code>i</code> = column (x) and <code>j</code> = row (y), with origin at <strong>bottom-left</strong>.</p>
+    <p>An image with <code>nx</code> columns and <code>ny</code> rows has its top-right pixel at <code>(nx−1, ny−1)</code>.</p>
+    <p><strong>Point sampling:</strong> A pixel's colour is the local average of all colours in its corresponding cell of the underlying continuous image.</p>
+
+    <div class="subsection-title">Bit Depth</div>
+    <div class="table-wrap"><table>
+      <tr><th>Bit depth</th><th>Min</th><th>Max</th><th>Values</th></tr>
+      <tr><td>8-bit</td><td>0</td><td>255</td><td>256</td></tr>
+      <tr><td>16-bit</td><td>0</td><td>65,535</td><td>65,536</td></tr>
+    </table></div>
+
+    <div class="concept">
+      <div class="concept-name">LDR — Low Dynamic Range</div>
+      <div class="concept-desc">Integer storage. Standard photos and game textures.</div>
+    </div>
+    <div class="concept">
+      <div class="concept-name">HDR — High Dynamic Range</div>
+      <div class="concept-desc">Floating-point storage. Photography and film VFX.</div>
+    </div>
+
+    <div class="warn-box"><strong>Clipping:</strong> When a value exceeds the representable range it is clamped. E.g., a computed red value of 1.8 clips to 1.0, losing highlight detail.</div>
+    <div class="warn-box"><strong>Quantization / Banding:</strong> Rounding to coarser integer values causes visible colour "steps". E.g., a smooth sky stored in 4-bit shows harsh bands instead of a smooth fade.</div>
+
+    <hr>
+    <div class="section-title">3.3 RGB Colour</div>
+    <p>Displays use <strong>additive mixing</strong> of Red, Green, and Blue light. (Paint uses subtractive — CMYK.)</p>
+
+    <div class="formula">possibleLevels(n) = 2^(n/3)</div>
+    <div class="example">
+      <div class="example-label">Example — 24-bit RGB</div>
+      possibleLevels(24) = 2^(24/3) = 2^8 = <strong>256</strong> levels per channel.<br>
+      256³ ≈ <strong>16.7 million</strong> possible colours total.
+    </div>
+
+    <p>RGB colour space visualised as a <strong>unit cube</strong>:</p>
+    <div class="table-wrap"><table>
+      <tr><th>Coordinate</th><th>Colour</th></tr>
+      <tr><td>(0, 0, 0)</td><td>Black</td></tr>
+      <tr><td>(1, 1, 1)</td><td>White</td></tr>
+      <tr><td>(1, 0, 0)</td><td>Red</td></tr>
+      <tr><td>(0, 1, 0)</td><td>Green</td></tr>
+      <tr><td>(0, 0, 1)</td><td>Blue</td></tr>
+    </table></div>
+
+    <hr>
+    <div class="section-title">3.4 Alpha Compositing</div>
+    <div class="formula">c = α · c_f + (1 − α) · c_b</div>
+    <div class="table-wrap"><table>
+      <tr><th>Variable</th><th>Meaning</th></tr>
+      <tr><td><code>c</code></td><td>Resulting blended colour</td></tr>
+      <tr><td><code>c_f</code></td><td>Foreground colour</td></tr>
+      <tr><td><code>c_b</code></td><td>Background colour</td></tr>
+      <tr><td><code>α</code></td><td>Coverage fraction (0 = transparent, 1 = opaque)</td></tr>
+    </table></div>
+    <div class="example">
+      <div class="example-label">Example</div>
+      Foreground (cyan) c_f = [0, 1, 1], Background (yellow) c_b = [1, 1, 0], α = 0.3<br><br>
+      c = 0.3·[0,1,1] + 0.7·[1,1,0] = [0.7, 1.0, 0.3]
+    </div>
+
+    <p><strong>Alpha channel storage:</strong></p>
+    <ul>
+      <li>Separate greyscale image, OR</li>
+      <li>Fourth channel in <strong>RGBA</strong> format (32-bit total for 8-bit per channel)</li>
+    </ul>
+    <div class="formula">possibleLevelsAlpha(n) = 2^(n/4)</div>
+
+    <hr>
+    <div class="section-title">3.4.1 Image Storage Formats</div>
+    <div class="table-wrap"><table>
+      <tr><th>Format</th><th>Type</th><th>Notes</th></tr>
+      <tr><td><strong>JPEG</strong></td><td>Lossy</td><td>Best for photos; degrades with re-saves</td></tr>
+      <tr><td><strong>PNG</strong></td><td>Lossless</td><td>Supports alpha; larger than JPEG</td></tr>
+      <tr><td><strong>TIFF</strong></td><td>Lossless</td><td>Professional standard; large files</td></tr>
+      <tr><td><strong>PPM</strong></td><td>Lossless</td><td>Plain-text; easy to write in code</td></tr>
+    </table></div>
+
+  </div>
+</div>
+
+<!-- ═══════════ LECTURE 3 ═══════════ -->
+<div class="lecture lec-3" id="lec3">
+  <div class="lecture-header" onclick="toggleLecture(this)">
+    <span class="lecture-num">Lecture 3 · Ch. 4</span>
+    <span class="lecture-title">Ray Tracing</span>
+    <span class="lecture-chevron">▾</span>
+  </div>
+  <div class="lecture-body">
+
+    <div class="section-title">4.1 Rendering Approaches</div>
+    <div class="concept"><div class="concept-name">Object-order rendering</div><div class="concept-desc">Iterate over each object; find what pixels it affects.</div></div>
+    <div class="concept"><div class="concept-name">Image-order rendering</div><div class="concept-desc">Iterate over each pixel; find what objects affect it. Ray tracing uses this approach.</div></div>
+
+    <div class="section-title">Basic Ray-Tracing Algorithm</div>
+    <pre>for each pixel:
+    Compute the viewing ray
+    Find the first object it intersects
+    Compute the surface normal n at the hit point
+    Set pixel colour using n, light position, and hit point</pre>
+    <p>A <strong>viewing ray</strong> emanates from the viewpoint (camera) in the direction of a specific pixel.</p>
+
+    <hr>
+    <div class="section-title">4.2 Perspective</div>
+
+    <div class="concept">
+      <div class="concept-name">Parallel Projection</div>
+      <div class="concept-desc">3D points mapped to 2D by moving them parallel along a projection direction until they hit the image plane. Preserves parallel lines and true sizes.</div>
+    </div>
+    <ul>
+      <li><strong>Orthographic:</strong> image plane ⊥ to view direction</li>
+      <li><strong>Oblique:</strong> image plane not ⊥ to view direction</li>
+    </ul>
+    <div class="concept">
+      <div class="concept-name">Perspective Projection</div>
+      <div class="concept-desc">Points project along lines converging at a single viewpoint. Objects appear smaller farther away. Used in games, film, real-time graphics.</div>
+    </div>
+
+    <hr>
+    <div class="section-title">4.3 Computing Viewing Rays</div>
+
+    <div class="formula">p(t) = e + t(s − e)</div>
+    <div class="table-wrap"><table>
+      <tr><th>Variable</th><th>Meaning</th></tr>
+      <tr><td><code>e</code></td><td>Eye / camera position (start)</td></tr>
+      <tr><td><code>s</code></td><td>A point on the image plane</td></tr>
+      <tr><td><code>t</code></td><td>Parameter: p(0)=e, p(1)=s</td></tr>
+    </table></div>
+
+    <div class="subsection-title">Camera Frame {u, v, w}</div>
+    <ul>
+      <li><code>e</code> — viewpoint</li>
+      <li><code>u</code> — rightward direction</li>
+      <li><code>v</code> — upward direction</li>
+      <li><code>w</code> — backward direction (opposite view)</li>
+      <li>Forms a <strong>right-handed coordinate system</strong></li>
+    </ul>
+
+    <div class="subsection-title">Pixel → Image-Plane Mapping</div>
+    <div class="formula">u = l + (r−l)(i + 0.5) / nx<br>v = b + (t−b)(j + 0.5) / ny</div>
+
+    <div class="subsection-title">Orthographic Viewing Ray</div>
+    <pre>compute u, v
+Ray origin    = e + u·û + v·v̂
+Ray direction = −ŵ</pre>
+    <p>All rays have the <strong>same direction</strong> but different origins.</p>
+
+    <div class="subsection-title">Perspective Viewing Ray</div>
+    <pre>compute u, v
+Ray origin    = e
+Ray direction = −d·ŵ + u·û + v·v̂</pre>
+    <p>All rays share the same origin but <strong>diverge in direction</strong>. <code>d</code> is the focal length.</p>
+
+    <hr>
+    <div class="section-title">4.4 Ray–Object Intersection</div>
+
+    <div class="subsection-title">4.4.1 Ray–Sphere Intersection</div>
+    <div class="formula">(d·d)t² + 2d·(e−c)t + (e−c)·(e−c) − R² = 0</div>
+    <p>Quadratic At² + Bt + C = 0 where:</p>
+    <ul>
+      <li>A = d·d, &nbsp; B = 2d·(e−c), &nbsp; C = (e−c)·(e−c) − R²</li>
+    </ul>
+    <div class="table-wrap"><table>
+      <tr><th>Discriminant</th><th>Meaning</th></tr>
+      <tr><td>D &lt; 0</td><td>No intersection (misses sphere)</td></tr>
+      <tr><td>D = 0</td><td>Tangent (one intersection)</td></tr>
+      <tr><td>D &gt; 0</td><td>Two intersections — take smallest positive t</td></tr>
+    </table></div>
+
+    <div class="subsection-title">4.4.2 Ray–Triangle Intersection</div>
+    <div class="formula">e + td = a + β(b−a) + γ(c−a)</div>
+    <p>Gives a 3×3 linear system in unknowns t, β, γ. Hit inside triangle iff: <strong>β &gt; 0, γ &gt; 0, β + γ &lt; 1</strong></p>
+
+    <div class="subsection-title">Early Termination (Efficient)</div>
+    <ol>
+      <li>Compute t — if out of range, return false</li>
+      <li>Compute γ — if &lt; 0 or &gt; 1, return false</li>
+      <li>Compute β — if &lt; 0 or β + γ &gt; 1, return false</li>
+      <li>Return true (hit found)</li>
+    </ol>
+  </div>
+</div>
+
+<!-- ═══════════ LECTURE 4 ═══════════ -->
+<div class="lecture lec-4" id="lec4">
+  <div class="lecture-header" onclick="toggleLecture(this)">
+    <span class="lecture-num">Lecture 4 · Ch. 4.5 &amp; 5</span>
+    <span class="lecture-title">Surface Shading</span>
+    <span class="lecture-chevron">▾</span>
+  </div>
+  <div class="lecture-body">
+
+    <div class="section-title">4.5 Shading Overview</div>
+    <p>Shading is applied at the point where the viewing ray hits a surface. It simulates how light interacts with materials.</p>
+
+    <div class="subsection-title">Light Source Types</div>
+    <div class="table-wrap"><table>
+      <tr><th>Type</th><th>Description</th><th>Example</th></tr>
+      <tr><td><strong>Point</strong></td><td>Single point; intensity falls off with distance</td><td>Lamp, torch</td></tr>
+      <tr><td><strong>Directional</strong></td><td>Single infinite direction; no falloff</td><td>Sun</td></tr>
+      <tr><td><strong>Ambient</strong></td><td>Global uniform; no direction</td><td>Skylight, fill light</td></tr>
+    </table></div>
+
+    <div class="subsection-title">Shading Vectors at Hit Point x</div>
+    <ul>
+      <li><code>x</code> — the hit point</li>
+      <li><code>n</code> — surface normal (unit vector)</li>
+      <li><code>l</code> — light direction (unit vector toward light)</li>
+      <li><code>v</code> — viewing direction: v = −d / ||d||</li>
+    </ul>
+
+    <hr>
+    <div class="section-title">5.1 Point-like Light Sources</div>
+
+    <div class="formula">E = I / r²</div>
+    <p>With Lambert's cosine law:</p>
+    <div class="formula">E = I · (n · l) / r²</div>
+    <p><code>n · l</code> = cos(θ) where θ is the angle of incidence.</p>
+
+    <p><strong>Directional light (constant H):</strong></p>
+    <div class="formula">E = H · cos(θ)</div>
+
+    <hr>
+    <div class="section-title">5.2 Reflection Models</div>
+
+    <div class="subsection-title">5.2.1 Lambertian (Diffuse) Reflection</div>
+    <p>Ideal diffuse surface — reflects equally in all directions. Flat chalky appearance (matte paint, chalk, rough wood).</p>
+    <div class="formula">Lr = (R / π) · E</div>
+    <p>Full form with point light:</p>
+    <div class="formula">Lr = (R / π) · I · (n · l) / r²</div>
+
+    <div class="subsection-title">5.2.2 Blinn-Phong (Specular) Reflection</div>
+    <p>View-dependent — captures shiny highlights on glossy or metallic surfaces.</p>
+    <p><strong>Half vector</strong> (halfway between l and v):</p>
+    <div class="formula">h = (l + v) / ||l + v||</div>
+    <p>Shininess = (n · h)^p where <strong>p</strong> is the Phong exponent (higher = tighter highlight).</p>
+    <p><strong>Combined Lambertian + Blinn-Phong:</strong></p>
+    <div class="formula">Lr = ( R/π + ks · max(0, n·h)^p ) · E</div>
+
+    <div class="subsection-title">5.2.3 Mirror Reflection</div>
+    <div class="formula">r = d − 2(d · n)n</div>
+    <div class="formula">c = c + km · shadeRay(...)</div>
+    <p>km is the mirror coefficient (coloured for metals like gold).</p>
+
+    <hr>
+    <div class="section-title">5.3 Ambient Illumination</div>
+    <div class="formula">Lr = ka · Ia</div>
+    <ul>
+      <li><code>ka</code> = ambient reflection coefficient</li>
+      <li><code>Ia</code> = ambient light intensity</li>
+    </ul>
+
+    <hr>
+    <div class="section-title">4.5.3 Shadows</div>
+    <p>A <strong>shadow ray</strong> is fired from the surface hit point toward the light source. If it hits another object first, the point is in shadow — that light's contribution is skipped.</p>
+    <div class="info-box">Shadows are computed per-light. <strong>Ambient light never casts shadows.</strong></div>
+  </div>
+</div>
+
+<!-- ═══════════ LECTURE 5–6 ═══════════ -->
+<div class="lecture lec-5" id="lec5">
+  <div class="lecture-header" onclick="toggleLecture(this)">
+    <span class="lecture-num">Lectures 5–6 · Ch. 17</span>
+    <span class="lecture-title">Using Graphics Hardware</span>
+    <span class="lecture-chevron">▾</span>
+  </div>
+  <div class="lecture-body">
+
+    <div class="section-title">17.2 What is Graphics Hardware?</div>
+    <p>A <strong>GPU</strong> is a specialised processor with thousands of lightweight cores for massive parallelism, optimised for matrix/vector operations, with dedicated VRAM.</p>
+
+    <div class="table-wrap"><table>
+      <tr><th>Year</th><th>Milestone</th></tr>
+      <tr><td>1981</td><td>IBM Monochrome Display Adapter (text only)</td></tr>
+      <tr><td>1999</td><td>Nvidia GeForce 256 — first true GPU, 17M transistors, 120 MHz</td></tr>
+      <tr><td>2025</td><td>Nvidia RTX 5090 — 21,760 CUDA cores, 2.41 GHz, 32 GB GDDR7</td></tr>
+    </table></div>
+    <p style="font-size:13px; color:var(--text-3);">GPUs also used for AI/ML training, scientific simulation, and cryptocurrency mining.</p>
+
+    <hr>
+    <div class="section-title">17.4 Buffers and the Rendering Loop</div>
+    <p><strong>Display buffer:</strong> the 2D array of pixel colours sent to the screen. Logically 2D, physically stored as a 1D array in GPU memory.</p>
+    <div class="concept">
+      <div class="concept-name">Double Buffering</div>
+      <div class="concept-desc">Two buffers: <strong>front</strong> (displayed) and <strong>back</strong> (being drawn to). After rendering, swapped via pointer exchange. Prevents <em>screen tearing</em>.</div>
+    </div>
+    <pre>// Clear back buffer before writing
+glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+glClear(GL_COLOR_BUFFER_BIT);
+
+// Enable depth testing (z-buffer)
+glEnable(GL_DEPTH_TEST);
+glDepthFunc(GL_LESS);</pre>
+    <div class="subsection-title">Main Render Loop</div>
+    <pre>do {
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    // ... draw objects here ...
+    glfwSwapBuffers(window);
+    glfwPollEvents();
+} while (glfwGetKey(window, GLFW_KEY_SPACE) != GLFW_PRESS
+      && glfwWindowShouldClose(window) == 0);</pre>
+
+    <hr>
+    <div class="section-title">17.8 Shaders</div>
+    <p>Modern OpenGL requires at least:</p>
+    <ol>
+      <li><strong>Vertex shader</strong> — processes each vertex</li>
+      <li><strong>Fragment shader</strong> — processes each rasterised fragment</li>
+    </ol>
+    <p>Written in <strong>GLSL</strong> (OpenGL Shading Language).</p>
+
+    <div class="subsection-title">Minimal Vertex Shader</div>
+    <pre>#version 330 core
+layout(location = 0) in vec3 in_Position;
+
+void main(void) {
+    gl_Position = vec4(in_Position, 1.0);
+}</pre>
+    <ul>
+      <li><code>layout(location=0)</code> — data from vertex attribute index 0</li>
+      <li><code>gl_Position</code> — reserved output: final clip-space position</li>
+      <li><code>in</code> — data flowing into the shader</li>
+    </ul>
+
+    <div class="subsection-title">Minimal Fragment Shader</div>
+    <pre>#version 330 core
+layout(location = 0) out vec4 out_FragmentColor;
+
+void main(void) {
+    // light green, fully opaque
+    out_FragmentColor = vec4(0.49, 0.87, 0.59, 1.0);
+}</pre>
+    <ul>
+      <li><code>out</code> — data flowing out to colour buffer</li>
+      <li>Output is RGBA: (red, green, blue, alpha)</li>
+    </ul>
+
+    <div class="subsection-title">GLSL Types</div>
+    <div class="table-wrap"><table>
+      <tr><th>Category</th><th>Types</th></tr>
+      <tr><td>Vectors</td><td><code>vec2</code>, <code>vec3</code>, <code>vec4</code></td></tr>
+      <tr><td>Matrices</td><td><code>mat2</code>, <code>mat3</code>, <code>mat4</code></td></tr>
+      <tr><td>Scalars</td><td><code>int</code>, <code>float</code></td></tr>
+    </table></div>
+
+    <div class="subsection-title">Swizzling</div>
+    <pre>vec3 position = vec3(1.0, 2.0, 3.0);
+vec2 xy  = position.xy;        // (1.0, 2.0)
+vec3 xxy = position.xxy;       // (1.0, 1.0, 2.0)
+vec4 xyzw = vec4(position, 1.0); // (1.0, 2.0, 3.0, 1.0)</pre>
+
+    <hr>
+    <div class="section-title">17.9 Vertex Buffer Objects (VBOs)</div>
+    <p>A VBO stores vertex attribute data (positions, colours, normals) on the GPU.</p>
+    <pre>GLfloat vertices[] = {
+    -0.5f, -0.5f, 0.0f,   // bottom-left
+     0.5f, -0.5f, 0.0f,   // bottom-right
+     0.0f,  0.5f, 0.0f    // top-centre
+};  // triangle
+
+GLuint triangleVBO[1];
+glGenBuffers(1, triangleVBO);
+glBindBuffer(GL_ARRAY_BUFFER, triangleVBO[0]);
+glBufferData(GL_ARRAY_BUFFER, 9 * sizeof(GLfloat),
+             vertices, GL_STATIC_DRAW);
+glBindBuffer(GL_ARRAY_BUFFER, 0);</pre>
+
+    <hr>
+    <div class="section-title">17.10 Vertex Array Objects (VAOs)</div>
+    <p>A VAO bundles one or more VBOs and describes how data connects to shader inputs.</p>
+    <pre>GLuint VAO;
+glGenVertexArrays(1, &VAO);
+glBindVertexArray(VAO);
+
+glEnableVertexAttribArray(0);
+glBindBuffer(GL_ARRAY_BUFFER, triangleVBO[0]);
+glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE,
+                      3*sizeof(GLfloat), 0);
+glBindVertexArray(0);
+
+// Drawing:
+glBindVertexArray(VAO);
+glDrawArrays(GL_TRIANGLES, 0, 3);
+glBindVertexArray(0);</pre>
+
+    <hr>
+    <div class="section-title">OpenGL Primitive Drawing Modes</div>
+    <p><strong>Why triangles?</strong> Simplest polygon — three non-collinear points always define a unique plane (always flat).</p>
+    <div class="table-wrap"><table>
+      <tr><th>Mode</th><th>Behaviour</th></tr>
+      <tr><td><code>GL_POINTS</code></td><td>Each vertex drawn as a point</td></tr>
+      <tr><td><code>GL_LINES</code></td><td>Each pair (a,b), (c,d)... is a separate line</td></tr>
+      <tr><td><code>GL_LINE_STRIP</code></td><td>Connected line through all vertices</td></tr>
+      <tr><td><code>GL_LINE_LOOP</code></td><td>Like strip + connects last vertex to first</td></tr>
+      <tr><td><code>GL_TRIANGLES</code></td><td>Each triple (a,b,c), (d,e,f)... is a triangle</td></tr>
+      <tr><td><code>GL_TRIANGLE_STRIP</code></td><td>(a,b,c), (b,c,d), (c,d,e)... each new vertex + last 2</td></tr>
+      <tr><td><code>GL_TRIANGLE_FAN</code></td><td>(a,b,c), (a,c,d), (a,d,e)... first vertex shared by all</td></tr>
+    </table></div>
+    <div class="info-box"><strong>Winding order:</strong> Use <strong>counter-clockwise</strong> vertex ordering when viewed from outside so the normal faces outward.</div>
+  </div>
+</div>
+
+<!-- ═══════════ LECTURE 7 ═══════════ -->
+<div class="lecture lec-7" id="lec7">
+  <div class="lecture-header" onclick="toggleLecture(this)">
+    <span class="lecture-num">Lecture 7 · Ch. 7</span>
+    <span class="lecture-title">2D Transformations</span>
+    <span class="lecture-chevron">▾</span>
+  </div>
+  <div class="lecture-body">
+
+    <div class="section-title">7.1 2D Linear Transformations</div>
+    <pre>for each vertex v in object:
+    v' = T * v</pre>
+
+    <div class="subsection-title">Scaling</div>
+    <pre>scale(sx, sy) = [sx  0 ]
+                [0   sy]</pre>
+    <p>Uniform scale if sx = sy; non-uniform (deforms) if sx ≠ sy.</p>
+    <div class="example"><div class="example-label">Example</div>Scale (3, 2) by sx=2, sy=3 → (6, 6)</div>
+
+    <div class="subsection-title">Shearing</div>
+    <pre>shearX(s) = [1  s]    shearY(s) = [1  0]
+            [0  1]                 [s  1]</pre>
+    <p>Pushes the object sideways — like tilting a deck of cards.</p>
+    <div class="example"><div class="example-label">Example</div>shearX(0.5) on (2, 3) → (2 + 0.5×3, 3) = (3.5, 3)</div>
+    <p>Angular form: <code>shearX(φ) = [[1, tan(φ)], [0, 1]]</code></p>
+
+    <div class="subsection-title">Reflection</div>
+    <pre>reflectY = [-1  0]    reflectX = [1   0]
+           [0   1]               [0  -1]</pre>
+    <div class="example"><div class="example-label">Example</div>Reflect (4, 2) over Y-axis → (−4, 2)</div>
+
+    <div class="subsection-title">Rotation (counter-clockwise by φ)</div>
+    <pre>rotate(φ) = [cos(φ)  -sin(φ)]
+            [sin(φ)   cos(φ)]</pre>
+    <div class="example"><div class="example-label">Example</div>Rotate (1, 0) by 90° → (cos90°, sin90°) = (0, 1)</div>
+
+    <hr>
+    <div class="section-title">7.3 Translation &amp; Homogeneous Coordinates</div>
+    <p>Translation cannot be expressed as a 2×2 matrix multiplication. We add an extra dimension:</p>
+    <ul>
+      <li>2D point <code>(x, y)</code> → <code>(x, y, 1)</code></li>
+      <li>2D direction <code>(x, y)</code> → <code>(x, y, 0)</code></li>
+    </ul>
+    <div class="formula">translate(xt, yt) = [1  0  xt]
+                       [0  1  yt]
+                       [0  0   1]</div>
+
+    <div class="table-wrap"><table>
+      <tr><th>Transform</th><th>Matrix (3×3)</th></tr>
+      <tr><td>Scale</td><td>diag(sx, sy, 1)</td></tr>
+      <tr><td>Shear X</td><td>[[1, hxy, 0], [hyx, 1, 0], [0, 0, 1]]</td></tr>
+      <tr><td>Reflect Y</td><td>diag(−1, 1, 1)</td></tr>
+      <tr><td>Rotate</td><td>[[cosφ, −sinφ, 0], [sinφ, cosφ, 0], [0, 0, 1]]</td></tr>
+      <tr><td>Translate</td><td>[[1, 0, xt], [0, 1, yt], [0, 0, 1]]</td></tr>
+    </table></div>
+    <div class="info-box"><strong>Rule:</strong> homogeneous w=1 → point; w=0 → direction. Translating a direction leaves it unchanged.</div>
+
+    <hr>
+    <div class="section-title">7.1.5 Composition of Transformations</div>
+    <p>To rotate an object about its own centre (not world origin):</p>
+    <ol>
+      <li><strong>T₁</strong> — translate centre to origin</li>
+      <li><strong>R</strong> — apply rotation</li>
+      <li><strong>T₂</strong> — translate back</li>
+    </ol>
+    <div class="formula">M = T₂ · R · T₁</div>
+    <div class="warn-box">Read <strong>right-to-left</strong>: T₁ applied first, R second, T₂ last. Matrix order matters — T₂RT₁ ≠ T₁T₂R in general.</div>
+  </div>
+</div>
+
+<!-- ═══════════ LECTURE 8 ═══════════ -->
+<div class="lecture lec-8" id="lec8">
+  <div class="lecture-header" onclick="toggleLecture(this)">
+    <span class="lecture-num">Lecture 8 · Ch. 7</span>
+    <span class="lecture-title">3D Transformations</span>
+    <span class="lecture-chevron">▾</span>
+  </div>
+  <div class="lecture-body">
+
+    <div class="section-title">7.2 3D Linear Transformations</div>
+
+    <div class="subsection-title">3D Scaling</div>
+    <pre>scale(sx, sy, sz) = [sx  0   0 ]
+                    [0   sy  0 ]
+                    [0   0   sz]</pre>
+
+    <div class="subsection-title">3D Rotation — around each axis</div>
+    <pre>Rz(φ) = [cos φ  -sin φ  0]
+         [sin φ   cos φ  0]
+         [0       0      1]
+
+Rx(φ) = [1    0       0  ]
+         [0  cos φ  -sin φ]
+         [0  sin φ   cos φ]
+
+Ry(φ) = [cos φ   0  sin φ]
+         [0       1    0  ]
+         [-sin φ  0  cos φ]</pre>
+    <div class="example"><div class="example-label">Example</div>Rotate (1, 0, 0) around Z-axis by 90° → (0, 1, 0)</div>
+
+    <div class="subsection-title">3D Shear (Z-axis)</div>
+    <pre>shearZ(dx, dy) = [1  0  dx]
+                 [0  1  dy]
+                 [0  0   1]</pre>
+
+    <div class="subsection-title">3D Translation (homogeneous 4×4)</div>
+    <pre>T(d) = [1  0  0  dx]
+       [0  1  0  dy]
+       [0  0  1  dz]
+       [0  0  0   1]</pre>
+
+    <hr>
+    <div class="section-title">7.2.2 Transforming Normal Vectors</div>
+    <div class="warn-box">Surface normals do <strong>not</strong> transform correctly under the standard matrix M. Use the <strong>inverse transpose</strong>:</div>
+    <div class="formula">n_new = (M⁻¹)ᵀ · n</div>
+    <p>Always <strong>normalise</strong> the result for lighting calculations.</p>
+
+    <hr>
+    <div class="section-title">7.4 Inverses of Transformation Matrices</div>
+    <ul>
+      <li><strong>Option 1:</strong> Compute the matrix inverse M⁻¹</li>
+      <li><strong>Option 2:</strong> Apply inverse transformation directly:
+        <ul>
+          <li>Undo T(d) → apply T(−d)</li>
+          <li>Undo Rx(45°) → apply Rx(−45°)</li>
+        </ul>
+      </li>
+    </ul>
+
+    <hr>
+    <div class="section-title">Rotation About an Arbitrary Axis</div>
+    <p>To rotate by θ around an axis defined by points P₀ and P₁:</p>
+    <ol>
+      <li>Compute V = P₁ − P₀</li>
+      <li>Normalise: u = V/|V| = (αx, αy, αz)</li>
+      <li>Compute d = √(αy² + αz²)</li>
+      <li>Construct alignment rotations Rx and Ry</li>
+      <li>Final: R = T(P₀) · Rx(−θx) · Ry(−θy) · Rz(θ) · Ry(θy) · Rx(θx) · T(−P₀)</li>
+    </ol>
+    <pre>Rx(θx) = [1    0       0     0]
+          [0   αz/d  -αy/d   0]
+          [0   αy/d   αz/d   0]
+          [0    0       0     1]
+
+Ry(θy) = [d    0  -αx   0]
+          [0    1    0   0]
+          [αx   0    d   0]
+          [0    0    0   1]</pre>
+  </div>
+</div>
+
+<!-- ═══════════ LECTURE 9 ═══════════ -->
+<div class="lecture lec-9" id="lec9">
+  <div class="lecture-header" onclick="toggleLecture(this)">
+    <span class="lecture-num">Lecture 9 · Ch. 9</span>
+    <span class="lecture-title">The Graphics Pipeline</span>
+    <span class="lecture-chevron">▾</span>
+  </div>
+  <div class="lecture-body">
+
+    <div class="section-title">9.1 Rasterization</div>
+    <p><strong>Rasterization</strong> = determining which pixels are covered by a geometric primitive.</p>
+    <p>The rasterizer: (1) iterates over covered pixels, (2) interpolates vertex attributes (colour, normals, UVs). Output: a set of <strong>fragments</strong>, one per covered pixel.</p>
+
+    <div class="subsection-title">9.1.1 Line Drawing — Midpoint Algorithm</div>
+    <div class="formula">f(x, y) = (y₀ − y₁)x + (x₁ − x₀)y + x₀y₁ − x₁y₀ = 0</div>
+    <p>For slope m ∈ (0, 1]:</p>
+    <pre>y = y0
+for x = x0 to x1:
+    draw(x, y)
+    if f(x+1, y+0.5) < 0:
+        y = y + 1</pre>
+    <p>The midpoint <code>(x+1, y+0.5)</code> tests which of the two candidate next pixels is closer to the true line.</p>
+
+    <hr>
+    <div class="section-title">9.1 Barycentric Coordinates</div>
+    <div class="formula">p(α, β, γ) = αa + βb + γc<br>where α + β + γ = 1, α = 1 − β − γ</div>
+    <div class="table-wrap"><table>
+      <tr><th>Condition</th><th>Point location</th></tr>
+      <tr><td>0 &lt; α,β,γ &lt; 1</td><td>Inside triangle</td></tr>
+      <tr><td>One coord = 0</td><td>On an edge</td></tr>
+      <tr><td>Two coords = 0</td><td>At a corner</td></tr>
+    </table></div>
+    <p><strong>Gouraud colour interpolation:</strong></p>
+    <div class="formula">c = αc₀ + βc₁ + γc₂</div>
+
+    <div class="subsection-title">9.1.2 Triangle Rasterization</div>
+    <pre>for all x:
+    for all y:
+        compute (α, β, γ) for (x+0.5, y+0.5)
+        if 0 ≤ α, β, γ ≤ 1:
+            c = α·c0 + β·c1 + γ·c2
+            draw pixel (x, y, c)</pre>
+    <div class="warn-box"><strong>Shared-edge problem:</strong> if a pixel centre lies exactly on a shared edge, use an off-screen point to determine which triangle "owns" the pixel.</div>
+
+    <hr>
+    <div class="section-title">9.2 Before and After Rasterization</div>
+
+    <div class="subsection-title">9.2.2 Minimal 3D Pipeline</div>
+    <p>Each vertex is multiplied by the combined transform:</p>
+    <div class="formula">Modelling × Camera × Projection × Viewport</div>
+    <p><strong>Painter's Algorithm</strong> (naïve): draw back-to-front. Fails with intersecting objects and cyclic occlusions.</p>
+
+    <div class="subsection-title">9.2.3 Z-Buffer (Depth Buffer)</div>
+    <p>Standard solution for hidden surface removal:</p>
+    <ul>
+      <li>Each pixel stores the depth (z) of the closest drawn fragment</li>
+      <li>New fragment arrives → compare its depth to stored value</li>
+      <li>If <strong>closer</strong>: update depth buffer and colour buffer</li>
+      <li>If <strong>further</strong>: discard</li>
+      <li>Initial value: <code>+∞</code> (no fragment drawn yet)</li>
+    </ul>
+
+    <div class="subsection-title">9.2.4 Pre-vertex Shading (Gouraud Shading)</div>
+    <p>Shading computed once per vertex. Colour then interpolated across fragments by the rasterizer.</p>
+
+    <div class="subsection-title">9.2.5 Pre-fragment Shading (Phong Shading)</div>
+    <p>Normals and positions interpolated across fragments. Shading computed per fragment. More accurate (especially for specular highlights) but more expensive.</p>
+
+    <hr>
+    <div class="section-title">9.3 Simple Anti-aliasing</div>
+    <p>Standard rasterization produces <strong>jagged edges</strong> (aliasing). Solutions:</p>
+    <div class="concept">
+      <div class="concept-name">Box Filtering</div>
+      <div class="concept-desc">Average all colours assigned to a pixel when a primitive partially covers it.</div>
+    </div>
+    <div class="concept">
+      <div class="concept-name">Super-sampling</div>
+      <div class="concept-desc">Render at higher resolution then down-sample (e.g., render at 4×, average 4 pixels to 1).</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ LECTURE 10 ═══════════ -->
+<div class="lecture lec-10" id="lec10">
+  <div class="lecture-header" onclick="toggleLecture(this)">
+    <span class="lecture-num">Lecture 10 · Ch. 12</span>
+    <span class="lecture-title">Data Structures</span>
+    <span class="lecture-chevron">▾</span>
+  </div>
+  <div class="lecture-body">
+
+    <div class="section-title">12.1 Triangle Meshes</div>
+    <p>A <strong>triangle mesh</strong> (triangular irregular network) is a collection of triangles sharing vertices.</p>
+
+    <div class="subsection-title">12.1.1 Manifold Restriction</div>
+    <p>A <strong>manifold mesh</strong> is "water-tight" — no holes or gaps.</p>
+    <ol>
+      <li>Every edge is shared by exactly <strong>two</strong> triangles</li>
+      <li>Every vertex has a single complete loop of triangles around it</li>
+    </ol>
+    <p><strong>Relaxed (with boundaries):</strong></p>
+    <ol>
+      <li>Every edge used by one or two triangles</li>
+      <li>Every vertex connects to a single edge-connected set of triangles</li>
+    </ol>
+
+    <div class="subsection-title">12.1.2 Indexed Mesh Storage</div>
+    <p>Naïve storage (one entry per corner) wastes memory by duplicating shared vertices.</p>
+    <div class="concept">
+      <div class="concept-name">Indexed Storage</div>
+      <div class="concept-desc">Array 1: unique vertex positions (size = 3nv)<br>Array 2: triangle indices into Array 1 (size = 3nt)</div>
+    </div>
+    <div class="table-wrap"><table>
+      <tr><th>Method</th><th>Storage</th></tr>
+      <tr><td>Naïve</td><td><strong>9nt</strong> units</td></tr>
+      <tr><td>Indexed</td><td><strong>3nv + 3nt</strong> units</td></tr>
+    </table></div>
+    <div class="example">
+      <div class="example-label">Example — Cube</div>
+      8 unique vertices, 12 triangles (2 per face × 6 faces):<br>
+      Naïve: 9×12 = <strong>108</strong> units<br>
+      Indexed: 3×8 + 3×12 = 24 + 36 = <strong>60</strong> units (44% less)
+    </div>
+
+    <hr>
+    <div class="section-title">12.2 Scene Graphs</div>
+    <p>A <strong>scene graph</strong> is a hierarchical data structure for managing object transformations in complex scenes.</p>
+    <div class="example">
+      <div class="example-label">Example</div>
+      A hinged double pendulum — the lower pendulum's position depends on the upper one. Moving the top automatically moves the bottom.
+    </div>
+    <p>Traversing the graph top-down <strong>accumulates transformation matrices</strong> along the hierarchy.</p>
+
+    <hr>
+    <div class="section-title">12.3 Spatial Data Structures</div>
+    <p>Used to efficiently answer: "which objects does this ray hit?"</p>
+    <div class="table-wrap"><table>
+      <tr><th>Type</th><th>Description</th></tr>
+      <tr><td><strong>Object partitioning</strong></td><td>Groups objects into bounding hierarchies; objects in different groups can overlap in space</td></tr>
+      <tr><td><strong>Space partitioning</strong></td><td>Divides space into disjoint regions; one object can span multiple regions</td></tr>
+    </table></div>
+
+    <div class="concept">
+      <div class="concept-name">12.3.1 Bounding Boxes (BVH)</div>
+      <div class="concept-desc">Wrap objects in AABBs. Test the ray against the box first — if no hit, skip all contained objects.</div>
+    </div>
+    <div class="concept">
+      <div class="concept-name">12.3.2 Hierarchical Bounding Boxes</div>
+      <div class="concept-desc">Nest bounding boxes inside larger boxes. Reduces per-object tests when a ray misses an entire region.</div>
+    </div>
+    <div class="concept">
+      <div class="concept-name">12.3.3 Uniform Spatial Subdivision</div>
+      <div class="concept-desc">Divide space into a uniform grid of axis-aligned cells. Trace the ray cell-by-cell; only test objects in the current cell.</div>
+    </div>
+  </div>
+</div>
+
+<button id="top-btn" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+
+<script>
+  function toggleToc() {
+    document.getElementById('toc').classList.toggle('open');
+  }
+
+  function toggleLecture(header) {
+    header.parentElement.classList.toggle('open');
+  }
+
+  // Show/hide scroll-to-top
+  window.addEventListener('scroll', () => {
+    const btn = document.getElementById('top-btn');
+    btn.classList.toggle('visible', window.scrollY > 300);
+  });
+
+  // Smooth scroll for TOC links
+  document.querySelectorAll('.toc-item').forEach(link => {
+    link.addEventListener('click', e => {
+      e.preventDefault();
+      const target = document.querySelector(link.getAttribute('href'));
+      if (target) {
+        // Open the lecture
+        target.classList.add('open');
+        target.scrollIntoView({behavior: 'smooth', block: 'start'});
+        // Close TOC
+        document.getElementById('toc').classList.remove('open');
+      }
+    });
+  });
+</script>
+</body>
+</html>

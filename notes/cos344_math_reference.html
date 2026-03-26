@@ -1,0 +1,1286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>COS 344 — Math Reference</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:       #f0edf8;
+    --surface:  #faf8fe;
+    --card:     #ffffff;
+    --border:   #ddd8ef;
+    --muted:    #c2bcd8;
+
+    --plum:     #8b6faa;
+    --plum-lt:  #e8e0f4;
+    --sage:     #7aaa8b;
+    --sage-lt:  #d4edd8;
+    --rose:     #c47a8a;
+    --rose-lt:  #f4dce0;
+    --sky:      #6a98c0;
+    --sky-lt:   #d4e8f4;
+    --amber:    #c09a50;
+    --amber-lt: #f0e8d0;
+    --mint:     #6aaa98;
+    --mint-lt:  #d4f0ea;
+    --peach:    #c09080;
+    --peach-lt: #f4e4dc;
+
+    --text:     #2e2840;
+    --text-2:   #5e5478;
+    --text-3:   #9e98b8;
+
+    --radius:   14px;
+    --radius-sm: 9px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    line-height: 1.65;
+    padding: 0 0 80px;
+  }
+
+  /* ── Header ── */
+  .header {
+    background: var(--plum);
+    padding: 20px 18px 16px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 12px rgba(100,60,160,.25);
+  }
+  .header-eyebrow {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,.7);
+    margin-bottom: 4px;
+  }
+  .header-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 22px;
+    color: #fff;
+    line-height: 1.2;
+  }
+  .header-sub { font-size: 12px; color: rgba(255,255,255,.65); margin-top: 4px; }
+
+  /* ── TOC ── */
+  .toc {
+    background: var(--card);
+    margin: 14px 14px 0;
+    border-radius: var(--radius);
+    border: 1.5px solid var(--border);
+    overflow: hidden;
+  }
+  .toc-header {
+    padding: 12px 16px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--text-3);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+  }
+  .toc-arrow { transition: transform .2s; }
+  .toc.open .toc-arrow { transform: rotate(180deg); }
+  .toc-list { display: none; padding: 8px 0; }
+  .toc.open .toc-list { display: block; }
+  .toc-item {
+    display: block;
+    padding: 7px 16px;
+    font-size: 13.5px;
+    color: var(--text-2);
+    text-decoration: none;
+    border-left: 3px solid transparent;
+    transition: all .15s;
+  }
+  .toc-item:active { background: var(--bg); border-left-color: var(--plum); color: var(--text); }
+  .toc-num { color: var(--text-3); font-size: 11px; margin-right: 6px; }
+
+  /* ── Section blocks ── */
+  .section {
+    margin: 14px 14px 0;
+  }
+  .section-header {
+    border-radius: var(--radius) var(--radius) 0 0;
+    padding: 13px 16px 11px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .section-num {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    opacity: .7;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .section-name {
+    font-family: 'DM Serif Display', serif;
+    font-size: 16.5px;
+    line-height: 1.25;
+    flex: 1;
+  }
+  .section-chevron {
+    font-size: 14px;
+    opacity: .6;
+    transition: transform .2s;
+    flex-shrink: 0;
+  }
+  .section.open .section-chevron { transform: rotate(180deg); }
+  .section-body {
+    display: none;
+    background: var(--card);
+    border: 1.5px solid var(--border);
+    border-top: none;
+    border-radius: 0 0 var(--radius) var(--radius);
+    padding: 16px;
+  }
+  .section.open .section-body { display: block; }
+
+  /* colour themes per section */
+  .s1 .section-header { background: var(--plum-lt); border: 1.5px solid #c8b8e4; }
+  .s2 .section-header { background: var(--sky-lt); border: 1.5px solid #a8ccdf; }
+  .s3 .section-header { background: var(--rose-lt); border: 1.5px solid #d8b0bc; }
+  .s4 .section-header { background: var(--sage-lt); border: 1.5px solid #a8d0b4; }
+  .s5 .section-header { background: var(--amber-lt); border: 1.5px solid #d0bc88; }
+  .s6 .section-header { background: var(--mint-lt); border: 1.5px solid #90c8b8; }
+  .s7 .section-header { background: var(--peach-lt); border: 1.5px solid #d4a898; }
+
+  /* ── Formula card ── */
+  .formula-card {
+    background: var(--plum-lt);
+    border: 1.5px solid #c0b0dc;
+    border-radius: var(--radius-sm);
+    padding: 14px;
+    margin: 12px 0 8px;
+  }
+  .formula-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--plum);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .formula-num {
+    background: var(--plum);
+    color: #fff;
+    border-radius: 20px;
+    padding: 1px 8px;
+    font-size: 10px;
+  }
+  .formula-body {
+    font-family: 'DM Mono', monospace;
+    font-size: 13.5px;
+    color: #2e1a50;
+    line-height: 1.8;
+    white-space: pre-wrap;
+  }
+
+  /* ── Variables table ── */
+  .vars {
+    background: var(--surface);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    margin: 8px 0;
+    overflow: hidden;
+  }
+  .vars-header {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--text-3);
+    padding: 7px 12px;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+  }
+  .var-row {
+    display: flex;
+    padding: 7px 12px;
+    border-bottom: 1px solid var(--border);
+    gap: 10px;
+  }
+  .var-row:last-child { border-bottom: none; }
+  .var-sym {
+    font-family: 'DM Mono', monospace;
+    font-size: 12.5px;
+    color: var(--plum);
+    min-width: 60px;
+    flex-shrink: 0;
+    font-weight: 500;
+  }
+  .var-def { font-size: 13px; color: var(--text-2); }
+
+  /* ── Explanation box ── */
+  .explanation {
+    font-size: 13.5px;
+    color: var(--text-2);
+    line-height: 1.65;
+    margin: 8px 0;
+    padding: 10px 14px;
+    background: var(--surface);
+    border-radius: var(--radius-sm);
+    border-left: 3px solid var(--plum);
+  }
+
+  /* ── Worked example ── */
+  .worked {
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    margin: 10px 0;
+    border: 1.5px solid var(--border);
+  }
+  .worked-header {
+    background: var(--amber-lt);
+    border-bottom: 1.5px solid #d0bc88;
+    padding: 8px 14px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: #7a5a10;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .worked-body {
+    background: var(--card);
+    padding: 12px 14px;
+  }
+  .worked-body p { font-size: 13.5px; color: var(--text-2); margin-bottom: 8px; }
+  .worked-body p:last-child { margin-bottom: 0; }
+
+  /* ── Code in worked examples ── */
+  pre {
+    font-family: 'DM Mono', monospace;
+    background: #1e1a2e;
+    color: #e0d8f4;
+    border-radius: var(--radius-sm);
+    padding: 12px 14px;
+    font-size: 12px;
+    line-height: 1.65;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin: 8px 0;
+  }
+  code {
+    font-family: 'DM Mono', monospace;
+    background: var(--plum-lt);
+    color: var(--plum);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 12.5px;
+  }
+
+  /* ── Tables ── */
+  .table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin: 10px 0;
+    border-radius: var(--radius-sm);
+    border: 1.5px solid var(--border);
+  }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 260px; }
+  th {
+    background: var(--bg);
+    font-weight: 600;
+    text-align: left;
+    padding: 9px 12px;
+    color: var(--text-2);
+    border-bottom: 1.5px solid var(--border);
+    font-size: 12px;
+    letter-spacing: .04em;
+  }
+  td {
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+    color: var(--text);
+    font-size: 13px;
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:nth-child(even) td { background: #f8f5fc; }
+
+  /* ── Dividers / headings inside section body ── */
+  .sub-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 15px;
+    color: var(--text);
+    margin: 20px 0 8px;
+    padding-bottom: 5px;
+    border-bottom: 1.5px solid var(--border);
+  }
+  .sub-title:first-child { margin-top: 0; }
+
+  hr { border: none; border-top: 1px solid var(--border); margin: 14px 0; }
+
+  p { margin-bottom: 10px; }
+  p:last-child { margin-bottom: 0; }
+  strong { font-weight: 600; color: var(--text); }
+
+  /* ── Discriminant / condition highlight ── */
+  .condition {
+    background: var(--sage-lt);
+    border: 1px solid var(--sage);
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 13px;
+    color: #1e5030;
+    margin: 4px 0;
+    font-family: 'DM Mono', monospace;
+  }
+
+  ul, ol { padding-left: 20px; margin: 8px 0; }
+  li { margin-bottom: 5px; font-size: 14px; color: var(--text-2); }
+  li strong { color: var(--text); }
+
+  /* ── Scroll top ── */
+  #top-btn {
+    position: fixed;
+    bottom: 20px;
+    right: 16px;
+    background: var(--plum);
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    width: 44px;
+    height: 44px;
+    font-size: 18px;
+    cursor: pointer;
+    box-shadow: 0 3px 12px rgba(100,60,160,.35);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+  }
+  #top-btn.visible { display: flex; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-eyebrow">COS 344 · Computer Graphics</div>
+  <div class="header-title">Mathematical Reference</div>
+  <div class="header-sub">All formulas with worked examples</div>
+</div>
+
+<!-- TOC -->
+<div class="toc" id="toc">
+  <div class="toc-header" onclick="toggleToc()">
+    Formulas <span class="toc-arrow">▼</span>
+  </div>
+  <div class="toc-list">
+    <a class="toc-item" href="#s1"><span class="toc-num">§1</span> Image &amp; Colour Mathematics</a>
+    <a class="toc-item" href="#s2"><span class="toc-num">§2</span> Ray Tracing Mathematics</a>
+    <a class="toc-item" href="#s3"><span class="toc-num">§3</span> Shading Mathematics</a>
+    <a class="toc-item" href="#s4"><span class="toc-num">§4</span> 2D Transformation Matrices</a>
+    <a class="toc-item" href="#s5"><span class="toc-num">§5</span> 3D Transformation Matrices</a>
+    <a class="toc-item" href="#s6"><span class="toc-num">§6</span> Graphics Pipeline Mathematics</a>
+    <a class="toc-item" href="#s7"><span class="toc-num">§7</span> Rotation About an Arbitrary Axis</a>
+  </div>
+</div>
+
+<!-- ═══════════ SECTION 1 ═══════════ -->
+<div class="section s1 open" id="s1">
+  <div class="section-header" onclick="toggleSection(this)">
+    <span class="section-num">§1</span>
+    <span class="section-name">Image &amp; Colour Mathematics</span>
+    <span class="section-chevron">▾</span>
+  </div>
+  <div class="section-body">
+
+    <!-- 1.1 -->
+    <div class="formula-card">
+      <div class="formula-label"><span class="formula-num">1.1</span> Image as a Function</div>
+      <div class="formula-body">I(x, y) : R → V
+where R ⊂ ℝ² and V is the set of pixel values</div>
+    </div>
+    <div class="explanation">
+      An image is modelled as a 2D function mapping coordinate (x, y) to a colour value V. V depends on image type: greyscale V = ℝ⁺, RGB V = (ℝ⁺)³.
+    </div>
+    <div class="worked">
+      <div class="worked-header">✎ Worked Example</div>
+      <div class="worked-body">
+        <p>For a 24-bit RGB image (1920×1080):<br>
+        Domain R = {(x, y) | 0 ≤ x &lt; 1920, 0 ≤ y &lt; 1080}<br>
+        V = (ℝ⁺)³ — a vector of 3 non-negative reals (R, G, B)</p>
+        <p>I(960, 540) = (0.2, 0.8, 0.4) → centre pixel is greenish</p>
+      </div>
+    </div>
+
+    <hr>
+
+    <!-- 1.2 -->
+    <div class="formula-card">
+      <div class="formula-label"><span class="formula-num">1.2</span> Pixel Colour Levels per Channel</div>
+      <div class="formula-body">possibleLevels(n) = 2^(n/3)</div>
+    </div>
+    <div class="explanation">
+      In an n-bit RGB system, each of the 3 channels gets n/3 bits. Levels = 2 raised to that share.
+    </div>
+    <div class="worked">
+      <div class="worked-header">✎ Worked Example</div>
+      <div class="worked-body">
+        <p>24-bit RGB: possibleLevels(24) = 2^(24/3) = 2^8 = <strong>256</strong></p>
+        <p>R: 256 values, G: 256 values, B: 256 values → 256³ = <strong>16,777,216</strong> total colours.</p>
+      </div>
+    </div>
+
+    <hr>
+
+    <!-- 1.3 -->
+    <div class="formula-card">
+      <div class="formula-label"><span class="formula-num">1.3</span> Pixel Colour Levels — with Alpha</div>
+      <div class="formula-body">possibleLevelsAlpha(n) = 2^(n/4)</div>
+    </div>
+    <div class="explanation">
+      In an RGBA system, n bits are shared equally among 4 channels.
+    </div>
+    <div class="worked">
+      <div class="worked-header">✎ Worked Example</div>
+      <div class="worked-body">
+        <p>32-bit RGBA: possibleLevelsAlpha(32) = 2^(32/4) = 2^8 = <strong>256</strong></p>
+        <p>Each of R, G, B, A can take values 0–255.</p>
+      </div>
+    </div>
+
+    <hr>
+
+    <!-- 1.4 -->
+    <div class="formula-card">
+      <div class="formula-label"><span class="formula-num">1.4</span> Alpha Compositing (Pixel Blending)</div>
+      <div class="formula-body">c = α · c_f + (1 − α) · c_b</div>
+    </div>
+    <div class="vars">
+      <div class="vars-header">Variables</div>
+      <div class="var-row"><span class="var-sym">c</span><span class="var-def">Resulting blended colour (vector)</span></div>
+      <div class="var-row"><span class="var-sym">c_f</span><span class="var-def">Foreground pixel colour (vector)</span></div>
+      <div class="var-row"><span class="var-sym">c_b</span><span class="var-def">Background pixel colour (vector)</span></div>
+      <div class="var-row"><span class="var-sym">α</span><span class="var-def">Coverage fraction (0 = transparent, 1 = opaque)</span></div>
+    </div>
+    <div class="explanation">
+      Linearly interpolates between foreground and background based on transparency. α=1 → foreground replaces background. α=0 → background unchanged.
+    </div>
+    <div class="worked">
+      <div class="worked-header">✎ Worked Example</div>
+      <div class="worked-body">
+        <p>c_f = (0, 1, 1) [cyan], c_b = (1, 1, 0) [yellow], α = 0.3</p>
+        <pre>c = 0.3 × (0, 1, 1) + 0.7 × (1, 1, 0)
+  = (0.0, 0.3, 0.3) + (0.7, 0.7, 0.0)
+  = (0.7, 1.0, 0.3)  ← brownish-green</pre>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════ SECTION 2 ═══════════ -->
+<div class="section s2" id="s2">
+  <div class="section-header" onclick="toggleSection(this)">
+    <span class="section-num">§2</span>
+    <span class="section-name">Ray Tracing Mathematics</span>
+    <span class="section-chevron">▾</span>
+  </div>
+  <div class="section-body">
+
+    <!-- 2.1 -->
+    <div class="formula-card">
+      <div class="formula-label"><span class="formula-num">2.1</span> Parametric Ray Equation</div>
+      <div class="formula-body">p(t) = e + t(s − e)
+     = e + t · d    where d = s − e</div>
+    </div>
+    <div class="vars">
+      <div class="vars-header">Variables</div>
+      <div class="var-row"><span class="var-sym">p(t)</span><span class="var-def">Point on the ray at parameter t</span></div>
+      <div class="var-row"><span class="var-sym">e</span><span class="var-def">Eye / viewpoint (ray origin)</span></div>
+      <div class="var-row"><span class="var-sym">s</span><span class="var-def">A point the ray passes through</span></div>
+      <div class="var-row"><span class="var-sym">d</span><span class="var-def">Direction vector of the ray</span></div>
+      <div class="var-row"><span class="var-sym">t</span><span class="var-def">Real-valued parameter</span></div>
+    </div>
+    <div class="explanation">
+      p(0) = e (at the eye). p(1) = s (at the image plane). If t₁ &lt; t₂ then p(t₁) is closer to e.
+    </div>
+    <div class="worked">
+      <div class="worked-header">✎ Worked Example</div>
+      <div class="worked-body">
+        <p>Camera at e = (0,0,5), image plane point at s = (1,0,0), find p at t = 0.5:</p>
+        <pre>d = (1,0,0) − (0,0,5) = (1, 0, −5)
+p(0.5) = (0,0,5) + 0.5×(1,0,−5)
+       = (0,0,5) + (0.5, 0, −2.5)
+       = (0.5, 0, 2.5)</pre>
+      </div>
+    </div>
+
+    <hr>
+
+    <!-- 2.2 -->
+    <div class="formula-card">
+      <div class="formula-label"><span class="formula-num">2.2</span> Pixel → Image-Plane Mapping</div>
+      <div class="formula-body">u = l + (r − l)(i + 0.5) / nx
+v = b + (t − b)(j + 0.5) / ny</div>
+    </div>
+    <div class="vars">
+      <div class="vars-header">Variables</div>
+      <div class="var-row"><span class="var-sym">(i, j)</span><span class="var-def">Pixel coordinates (column, row)</span></div>
+      <div class="var-row"><span class="var-sym">nx, ny</span><span class="var-def">Image width and height in pixels</span></div>
+      <div class="var-row"><span class="var-sym">l, r</span><span class="var-def">Left and right edges of image plane</span></div>
+      <div class="var-row"><span class="var-sym">b, t</span><span class="var-def">Bottom and top edges of image plane</span></div>
+      <div class="var-row"><span class="var-sym">(u, v)</span><span class="var-def">Continuous coordinates on image plane</span></div>
+    </div>
+    <div class="explanation">
+      The <code>+ 0.5</code> centres the sample at the pixel's midpoint (not its corner).
+    </div>
+    <div class="worked">
+      <div class="worked-header">✎ Worked Example</div>
+      <div class="worked-body">
+        <p>Image: 800×600, plane: l=−1, r=1, b=−0.75, t=0.75. Pixel (400, 300):</p>
+        <pre>u = −1 + 2 × 400.5/800
+  = −1 + 1.00125 ≈ 0.00125  (≈ centre ✓)
+
+v = −0.75 + 1.5 × 300.5/600
+  ≈ 0.00125  (≈ centre ✓)</pre>
+      </div>
+    </div>
+
+    <hr>
+
+    <!-- 2.3 -->
+    <div class="formula-card">
+      <div class="formula-label"><span class="formula-num">2.3</span> Orthographic Viewing Ray</div>
+      <div class="formula-body">Ray origin    = e + u·û + v·v̂
+Ray direction = −ŵ</div>
+    </div>
+    <div class="explanation">
+      All rays are <strong>parallel</strong> — same direction (−ŵ), different origins shifting across the image plane.
+    </div>
+
+    <hr>
+
+    <!-- 2.4 -->
+    <div class="formula-card">
+      <div class="formula-label"><span class="formula-num">2.4</span> Perspective Viewing Ray</div>
+      <div class="formula-body">Ray origin    = e
+Ray direction = −d·ŵ + u·û + v·v̂</div>
+    </div>
+    <div class="explanation">
+      All rays <strong>originate from the same point</strong> (the eye). Direction fans out per pixel. <code>d</code> is the focal length.
+    </div>
+    <div class="worked">
+      <div class="worked-header">✎ Worked Example</div>
+      <div class="worked-body">
+        <p>Camera at e=(0,0,0), û=(1,0,0), v̂=(0,1,0), ŵ=(0,0,1), d=1, u=0.5, v=0.3:</p>
+        <pre>dir = −1×(0,0,1) + 0.5×(1,0,0) + 0.3×(0,1,0)
+    = (0,0,−1) + (0.5,0,0) + (0,0.3,0)
+    = (0.5, 0.3, −1)  → normalise for unit vector</pre>
+      </div>
+    </div>
+
+    <hr>
+
+    <!-- 2.5 -->
+    <div class="formula-card">
+      <div class="formula-label"><span class="formula-num">2.5</span> Ray–Sphere Intersection</div>
+      <div class="formula-body">(d·d)t² + 2d·(e−c)t + (e−c)·(e−c) − R² = 0</div>
+    </div>
+    <div class="vars">
+      <div class="vars-header">Quadratic A, B, C</div>
+      <div class="var-row"><span class="var-sym">A</span><span class="var-def">d · d</span></div>
+      <div class="var-row"><span class="var-sym">B</span><span class="var-def">2d · (e−c)</span></div>
+      <div class="var-row"><span class="var-sym">C</span><span class="var-def">(e−c)·(e−c) − R²</span></div>
+    </div>
+    <div style="margin: 8px 0;">
+      <div class="condition">D &lt; 0 → No intersection (misses sphere)</div>
+      <div class="condition">D = 0 → Tangent (one intersection)</div>
+      <div class="condition">D &gt; 0 → Two intersections — take smallest positive t</div>
+    </div>
+    <div class="worked">
+      <div class="worked-header">✎ Worked Example</div>
+      <div class="worked-body">
+        <p>Sphere at c=(0,0,−3), R=1. Ray from e=(0,0,0) direction d=(0,0,−1):</p>
+        <pre>A = d·d = 1
+e−c = (0,0,3)
+B = 2×(−1)(3) = −6
+C = 9 − 1 = 8
+
+D = (−6)² − 4(1)(8) = 36 − 32 = 4  → D > 0: two hits
+t = (6 ± 2)/2  →  t₁=2, t₂=4</pre>
+        <p>Take t=2. Hit point: p(2) = (0, 0, −2) → <strong>front of the sphere</strong>.</p>
+      </div>
+    </div>
+
+    <hr>
+
+    <!-- 2.6 -->
+    <div class="formula-card">
+      <div class="formula-label"><span class="formula-num">2.6</span> Ray–Triangle Intersection (Barycentric)</div>
+      <div class="formula-body">e + td = a + β(b−a) + γ(c−a)</div>
+    </div>
+    <div class="explanation">
+      Gives a 3×3 linear system in unknowns t, β, γ. Solved with Cramer's Rule.
+    </div>
+    <div style="margin: 8px 0;">
+      <div class="condition">Hit iff: β &gt; 0, γ &gt; 0, and β + γ &lt; 1</div>
+    </div>
+    <div class="worked">
+      <div class="worked-header">✎ Worked Example</div>
+      <div class="worked-body">
+        <p>Triangle: a=(0,0,0), b=(1,0,0), c=(0,1,0). Ray: e=(0.2,0.2,1), d=(0,0,−1):</p>
+        <pre>x: 0.2 = β  → β = 0.2
+y: 0.2 = γ  → γ = 0.2
+z: 1−t = 0  → t = 1
+
+β=0.2>0 ✓  γ=0.2>0 ✓  β+γ=0.4&lt;1 ✓  → HIT!</pre>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════ SECTION 3 ═══════════ -->
+<div class="section s3" id="s3">
+  <div class="section-header" onclick="toggleSection(this)">
+    <span class="section-num">§3</span>
+    <span class="section-name">Shading Mathematics</span>
+    <span class="section-chevron">▾</span>
+  </div>
+  <div class="section-body">
+
+    <!-- 3.1 -->
+    <div class="formula-card">
+      <div class="formula-label"><span class="formula-num">3.1</span> Viewing Direction</div>
+      <div class="formula-body">v = −d / ||d||</div>
+    </div>
+    <div class="explanation">Unit vector from hit point back toward the camera — negation of the normalised ray direction.</div>
+    <div class="worked">
+      <div class="worked-header">✎ Worked Example</div>
+      <div class="worked-body">
+        <p>Ray direction d = (1, −1, −2)<br>||d|| = √(1+1+4) = √6 ≈ 2.449<br>v = −(1,−1,−2) / 2.449 = (−0.408, 0.408, 0.816)</p>
+      </div>
+    </div>
+
+    <hr>
+
+    <!-- 3.2 -->
+    <div class="formula-card">
+      <div class="formula-label"><span class="formula-num">3.2</span> Irradiance — Point Light Source</div>
+      <div class="formula-body">E = I / r²</div>
+    </div>
+    <div class="explanation">Light from a point source spreads over the surface of a growing sphere. Area grows with r², so intensity per unit area falls off with 1/r².</div>
+    <div class="worked">
+      <div class="worked-header">✎ Worked Example</div>
+      <div class="worked-body">
+        <p>I = 100, at r = 5: E = 100/25 = <strong>4 W/m²</strong></p>
+        <p>Same light at r = 10: E = 100/100 = <strong>1 W/m²</strong> (4× dimmer at 2× distance)</p>
+      </div>
+    </div>
+
+    <hr>
+
+    <!-- 3.3 -->
+    <div class="formula-card">
+      <div class="formula-label"><span class="formula-num">3.3</span> Irradiance with Lambert's Cosine Law</div>
+      <div class="formula-body">E = I · (n · l) / r²
+  = I · cos(θ) / r²</div>
+    </div>
+    <div class="vars">
+      <div class="vars-header">Variables</div>
+      <div class="var-row"><span class="var-sym">n</span><span class="var-def">Surface normal (unit vector)</span></div>
+      <div class="var-row"><span class="var-sym">l</span><span class="var-def">Unit vector toward the light</span></div>
+      <div class="var-row"><span class="var-sym">θ</span><span class="var-def">Angle of incidence (n · l = cos θ)</span></div>
+    </div>
+    <div class="explanation">When light hits at an angle, it spreads over a larger area. At grazing angles (θ → 90°), cos(θ) → 0 — almost no light received.</div>
+    <div class="worked">
+      <div class="worked-header">✎ Worked Example</div>
+      <div class="worked-body">
+        <p>I = 100, r = 5, n = (0,1,0), l = (0, 0.707, 0.707):</p>
+        <pre>n · l = 0.707
+E = 100 × 0.707 / 25 ≈ 2.83 W/m²</pre>
+      </div>
+    </div>
+
+    <hr>
+
+    <!-- 3.4 -->
+    <div class="formula-card">
+      <div class="formula-label"><span class="formula-num">3.4</span> Directional Light Irradiance</div>
+      <div class="formula-body">E = H · cos(θ)</div>
+    </div>
+    <div class="explanation">For a directional light (like the sun) the 1/r² falloff is negligible. Irradiance depends only on surface orientation relative to light direction. H is the constant normal irradiance.</div>
+
+    <hr>
+
+    <!-- 3.5 -->
+    <div class="formula-card">
+      <div class="formula-label"><span class="formula-num">3.5</span> Lambertian (Diffuse) Reflection</div>
+      <div class="formula-body">Lr = (R / π) · E
+
+Full form:
+Lr = (R / π) · I · max(0, n · l) / r²</div>
+    </div>
+    <div class="explanation">Ideal diffuse surface — reflects equally in all directions (matte paint, chalk, rough wood). <code>max(0, n·l)</code> clamps negative values: surface facing away receives zero illumination.</div>
+    <div class="worked">
+      <div class="worked-header">✎ Worked Example</div>
+      <div class="worked-body">
+        <p>R = (0.8, 0.2, 0.1) (reddish), E = 3.0 W/m²:</p>
+        <pre>Lr = (0.8/π, 0.2/π, 0.1/π) × 3.0
+   = (0.765, 0.191, 0.095)  ← predominantly red</pre>
+      </div>
+    </div>
+
+    <hr>
+
+    <!-- 3.6 -->
+    <div class="formula-card">
+      <div class="formula-label"><span class="formula-num">3.6</span> Half Vector (Blinn-Phong)</div>
+      <div class="formula-body">h = (l + v) / ||l + v||</div>
+    </div>
+    <div class="explanation">The half vector bisects the angle between the light direction and the view direction. When h aligns with the surface normal n, specularity is at maximum — this is where the highlight appears.</div>
+    <div class="worked">
+      <div class="worked-header">✎ Worked Example</div>
+      <div class="worked-body">
+        <p>l = (0,1,0), v = (1,0,0):</p>
+        <pre>l + v = (1, 1, 0)
+||l+v|| = √2 ≈ 1.414
+h = (0.707, 0.707, 0)</pre>
+      </div>
+    </div>
+
+    <hr>
+
+    <!-- 3.7 -->
+    <div class="formula-card">
+      <div class="formula-label"><span class="formula-num">3.7</span> Phong Specular Term</div>
+      <div class="formula-body">(n · h)^p</div>
+    </div>
+    <div class="table-wrap"><table>
+      <tr><th>p value</th><th>Appearance</th></tr>
+      <tr><td>1–10</td><td>Very broad highlight (plastic / rubber)</td></tr>
+      <tr><td>50–100</td><td>Medium glossy (polished wood)</td></tr>
+      <tr><td>500+</td><td>Very tight highlight (polished metal)</td></tr>
+    </table></div>
+    <div class="worked">
+      <div class="worked-header">✎ Worked Example</div>
+      <div class="worked-body">
+        <p>n = (0,1,0), h = (0.1, 0.995, 0), p = 50:</p>
+        <pre>n · h = 0.995
+(n · h)^50 = 0.995^50 ≈ 0.778</pre>
+      </div>
+    </div>
+
+    <hr>
+
+    <!-- 3.8 -->
+    <div class="formula-card">
+      <div class="formula-label"><span class="formula-num">3.8</span> Combined Blinn-Phong + Lambertian</div>
+      <div class="formula-body">Lr = ( R/π + ks · max(0, n·h)^p ) · E</div>
+    </div>
+    <div class="vars">
+      <div class="vars-header">Variables</div>
+      <div class="var-row"><span class="var-sym">R</span><span class="var-def">Diffuse reflectance colour</span></div>
+      <div class="var-row"><span class="var-sym">ks</span><span class="var-def">Specular coefficient colour</span></div>
+      <div class="var-row"><span class="var-sym">p</span><span class="var-def">Phong exponent (shininess)</span></div>
+      <div class="var-row"><span class="var-sym">E</span><span class="var-def">Irradiance at surface</span></div>
+    </div>
+    <div class="worked">
+      <div class="worked-header">✎ Worked Example</div>
+      <div class="worked-body">
+        <p>R = (0.6,0.6,0.6), ks = (0.4,0.4,0.4), p = 64, E = 2.0, n·h = 0.9:</p>
+        <pre>Specular = (0.9)^64 ≈ 0.001177
+Diffuse  = 0.6/π   ≈ 0.191
+Lr = (0.191 + 0.4×0.001177) × 2.0
+   ≈ 0.383 per channel</pre>
+        <p>When n·h ≈ 1, the specular term dominates.</p>
+      </div>
+    </div>
+
+    <hr>
+
+    <!-- 3.9 -->
+    <div class="formula-card">
+      <div class="formula-label"><span class="formula-num">3.9</span> Mirror Reflection Direction</div>
+      <div class="formula-body">r = d − 2(d · n)n</div>
+    </div>
+    <div class="explanation">The reflected ray is the incoming ray flipped across the surface normal. (d·n) projects d onto n; subtracting twice this reverses the component perpendicular to the surface.</div>
+    <div class="worked">
+      <div class="worked-header">✎ Worked Example</div>
+      <div class="worked-body">
+        <p>d̂ = (0.707, −0.707, 0), n = (0,1,0):</p>
+        <pre>d · n = −0.707
+r = (0.707, −0.707, 0) − 2(−0.707)(0,1,0)
+  = (0.707, −0.707, 0) + (0, 1.414, 0)
+  = (0.707, 0.707, 0)  ← bounces up ✓</pre>
+      </div>
+    </div>
+
+    <hr>
+
+    <!-- 3.10 -->
+    <div class="formula-card">
+      <div class="formula-label"><span class="formula-num">3.10</span> Ambient Illumination</div>
+      <div class="formula-body">Lr = ka · Ia</div>
+    </div>
+    <div class="vars">
+      <div class="vars-header">Variables</div>
+      <div class="var-row"><span class="var-sym">ka</span><span class="var-def">Ambient reflection coefficient (RGB, 0–1)</span></div>
+      <div class="var-row"><span class="var-sym">Ia</span><span class="var-def">Ambient light intensity (RGB)</span></div>
+    </div>
+    <div class="explanation">Directionless — fills all shadows uniformly. No geometry (normals, distances) involved.</div>
+    <div class="worked">
+      <div class="worked-header">✎ Worked Example</div>
+      <div class="worked-body">
+        <p>ka = (0.1, 0.1, 0.1), Ia = (1.0, 1.0, 1.0)<br>
+        Lr = (0.1, 0.1, 0.1) — dark grey ambient contribution</p>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════ SECTION 4 ═══════════ -->
+<div class="section s4" id="s4">
+  <div class="section-header" onclick="toggleSection(this)">
+    <span class="section-num">§4</span>
+    <span class="section-name">2D Transformation Matrices</span>
+    <span class="section-chevron">▾</span>
+  </div>
+  <div class="section-body">
+
+    <!-- 4.1 -->
+    <div class="formula-card">
+      <div class="formula-label"><span class="formula-num">4.1</span> 2D Scaling Matrix</div>
+      <div class="formula-body">scale(sx, sy) = | sx  0  |
+                | 0   sy |</div>
+    </div>
+    <div class="explanation">Multiplies x by sx and y by sy. Uniform if sx = sy; non-uniform (deforms) if sx ≠ sy.</div>
+    <div class="worked">
+      <div class="worked-header">✎ Worked Example</div>
+      <div class="worked-body">
+        <p>Scale (3, 2) by sx=2, sy=3:</p>
+        <pre>[2  0] [3]   [6]
+[0  3] [2] = [6]  → Result: (6, 6)</pre>
+      </div>
+    </div>
+
+    <hr>
+
+    <!-- 4.2 -->
+    <div class="formula-card">
+      <div class="formula-label"><span class="formula-num">4.2</span> 2D Shearing Matrices</div>
+      <div class="formula-body">shearX(s) = | 1  s |    shearY(s) = | 1  0 |
+            | 0  1 |                  | s  1 |
+
+Angular: shearX(φ) = | 1  tan(φ) |
+                     | 0    1    |</div>
+    </div>
+    <div class="worked">
+      <div class="worked-header">✎ Worked Example</div>
+      <div class="worked-body">
+        <p>shearX(0.5) on (2, 3):</p>
+        <pre>[1  0.5] [2]   [3.5]
+[0    1] [3] = [3  ]  → Result: (3.5, 3)</pre>
+      </div>
+    </div>
+
+    <hr>
+
+    <!-- 4.3 -->
+    <div class="formula-card">
+      <div class="formula-label"><span class="formula-num">4.3</span> 2D Reflection Matrices</div>
+      <div class="formula-body">reflectY = | −1  0 |  (flips X, reflects over Y)
+           |  0  1 |
+
+reflectX = |  1  0 |  (flips Y, reflects over X)
+           |  0 −1 |</div>
+    </div>
+    <div class="worked">
+      <div class="worked-header">✎ Worked Example</div>
+      <div class="worked-body">
+        <p>Reflect (4, 2) over Y-axis:</p>
+        <pre>[−1  0] [4]   [−4]
+[ 0  1] [2] = [ 2]  → Result: (−4, 2)</pre>
+      </div>
+    </div>
+
+    <hr>
+
+    <!-- 4.4 -->
+    <div class="formula-card">
+      <div class="formula-label"><span class="formula-num">4.4</span> 2D Rotation Matrix</div>
+      <div class="formula-body">rotate(φ) = | cos(φ)  −sin(φ) |
+            | sin(φ)   cos(φ) |</div>
+    </div>
+    <div class="explanation">
+      Rotates counter-clockwise by φ. Derived from:<br>
+      x_b = x_a·cos(φ) − y_a·sin(φ)<br>
+      y_b = y_a·cos(φ) + x_a·sin(φ)
+    </div>
+    <div class="worked">
+      <div class="worked-header">✎ Worked Example</div>
+      <div class="worked-body">
+        <p>Rotate (1, 0) by φ = 90°:</p>
+        <pre>[cos90°  −sin90°] [1]   [ 0  −1] [1]   [0]
+[sin90°   cos90°] [0] = [ 1   0] [0] = [1]
+→ Result: (0, 1) — moved from +X to +Y axis ✓</pre>
+      </div>
+    </div>
+
+    <hr>
+
+    <!-- 4.5 -->
+    <div class="formula-card">
+      <div class="formula-label"><span class="formula-num">4.5</span> 2D Translation Matrix (Homogeneous)</div>
+      <div class="formula-body">translate(xt, yt) = | 1  0  xt |
+                   | 0  1  yt |
+                   | 0  0   1 |
+
+Point:     (x, y, 1)
+Direction: (x, y, 0)</div>
+    </div>
+    <div class="explanation">Homogeneous w=1 → point (can be translated). w=0 → direction (translation has no effect). This unifies all 2D transforms into 3×3 matrices.</div>
+    <div class="worked">
+      <div class="worked-header">✎ Worked Example</div>
+      <div class="worked-body">
+        <p>Translate (3, 1) by (5, −2):</p>
+        <pre>[1  0   5] [3]   [8 ]
+[0  1  −2] [1] = [−1]
+[0  0   1] [1]   [1 ]  → Result: (8, −1)</pre>
+      </div>
+    </div>
+
+    <hr>
+
+    <!-- 4.6 -->
+    <div class="formula-card">
+      <div class="formula-label"><span class="formula-num">4.6</span> Composition of 2D Transformations</div>
+      <div class="formula-body">M = T₂ · R · T₁  (read right-to-left)</div>
+    </div>
+    <div class="explanation">
+      To rotate about own centre p:<br>
+      T₁ = translate(−p), R = rotate(φ), T₂ = translate(p)
+    </div>
+    <div class="worked">
+      <div class="worked-header">✎ Worked Example</div>
+      <div class="worked-body">
+        <p>Rotate (2, 3) by 90° about centre (1, 1):</p>
+        <pre>T₁: (2,3) → (1,2)    [translate by (−1,−1)]
+R:  (1,2) → (−2,1)   [rotate 90°]
+T₂: (−2,1) → (−1,2)  [translate by (1,1)]
+
+Combined matrix M = T₂ · R · T₁:
+[0 −1 2]
+[1  0 0]
+[0  0 1]
+
+Apply to (2, 3, 1):
+0×2 + (−1)×3 + 2 = −1
+1×2 + 0×3 + 0 = 2  → (−1, 2) ✓</pre>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════ SECTION 5 ═══════════ -->
+<div class="section s5" id="s5">
+  <div class="section-header" onclick="toggleSection(this)">
+    <span class="section-num">§5</span>
+    <span class="section-name">3D Transformation Matrices</span>
+    <span class="section-chevron">▾</span>
+  </div>
+  <div class="section-body">
+
+    <!-- 5.1 -->
+    <div class="formula-card">
+      <div class="formula-label"><span class="formula-num">5.1</span> 3D Scaling Matrix</div>
+      <div class="formula-body">scale(sx, sy, sz) = diag(sx, sy, sz)
+[sx  0    0  ]
+[0   sy   0  ]
+[0   0    sz ]</div>
+    </div>
+    <div class="worked">
+      <div class="worked-header">✎ Worked Example</div>
+      <div class="worked-body">
+        <p>Scale (2, 3, 4) by (1, 2, 0.5):</p>
+        <pre>[1    0    0  ] [2]   [2]
+[0    2    0  ] [3] = [6]
+[0    0    0.5] [4]   [2]</pre>
+      </div>
+    </div>
+
+    <hr>
+
+    <!-- 5.2 -->
+    <div class="formula-card">
+      <div class="formula-label"><span class="formula-num">5.2</span> 3D Rotation Matrices</div>
+      <div class="formula-body">Rz(φ) = | cos φ  −sin φ  0 |
+        | sin φ   cos φ  0 |
+        |   0       0    1 |
+
+Rx(φ) = |  1     0       0   |
+        |  0   cos φ  −sin φ |
+        |  0   sin φ   cos φ |
+
+Ry(φ) = | cos φ   0   sin φ |
+        |   0     1     0   |
+        | −sin φ  0   cos φ |</div>
+    </div>
+    <div class="worked">
+      <div class="worked-header">✎ Worked Example</div>
+      <div class="worked-body">
+        <p>Rotate (1, 0, 0) around Z-axis by 90°:</p>
+        <pre>Rz(90°)×(1,0,0) = (cos90°, sin90°, 0) = (0, 1, 0)</pre>
+        <p>Rotate (0, 1, 0) around X-axis by 90°:</p>
+        <pre>Rx(90°)×(0,1,0) = (0, cos90°, sin90°) = (0, 0, 1)</pre>
+      </div>
+    </div>
+
+    <hr>
+
+    <!-- 5.3 -->
+    <div class="formula-card">
+      <div class="formula-label"><span class="formula-num">5.3</span> 3D Translation Matrix (Homogeneous 4×4)</div>
+      <div class="formula-body">T(d) = | 1  0  0  dx |
+       | 0  1  0  dy |
+       | 0  0  1  dz |
+       | 0  0  0   1 |</div>
+    </div>
+    <div class="worked">
+      <div class="worked-header">✎ Worked Example</div>
+      <div class="worked-body">
+        <p>Translate (1, 2, 3) by d = (5, −1, 2):</p>
+        <pre>[1  0  0  5] [1]   [6]
+[0  1  0 −1] [2] = [1]
+[0  0  1  2] [3]   [5]
+[0  0  0  1] [1]   [1]  → Result: (6, 1, 5)</pre>
+      </div>
+    </div>
+
+    <hr>
+
+    <!-- 5.4 -->
+    <div class="formula-card">
+      <div class="formula-label"><span class="formula-num">5.4</span> Transforming Normal Vectors</div>
+      <div class="formula-body">n_new = (M⁻¹)ᵀ · n
+
+then normalise:  n̂_new = n_new / ||n_new||</div>
+    </div>
+    <div class="explanation">Normals represent surface orientations, not positions. Applying M directly would distort them (especially under non-uniform scaling). The inverse transpose preserves orthogonality.</div>
+    <div class="worked">
+      <div class="worked-header">✎ Worked Example</div>
+      <div class="worked-body">
+        <p>Scale surface by (2, 1, 1). M = diag(2, 1, 1). Normal n = (1, 0, 0):</p>
+        <pre>M⁻¹ = diag(0.5, 1, 1)
+(M⁻¹)ᵀ = diag(0.5, 1, 1)
+n_new = (0.5, 0, 0)
+Normalise: (1, 0, 0) ✓  (unchanged, uniform in this case)</pre>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════ SECTION 6 ═══════════ -->
+<div class="section s6" id="s6">
+  <div class="section-header" onclick="toggleSection(this)">
+    <span class="section-num">§6</span>
+    <span class="section-name">Graphics Pipeline Mathematics</span>
+    <span class="section-chevron">▾</span>
+  </div>
+  <div class="section-body">
+
+    <!-- 6.1 -->
+    <div class="formula-card">
+      <div class="formula-label"><span class="formula-num">6.1</span> Implicit Line Equation</div>
+      <div class="formula-body">f(x,y) = (y₀−y₁)x + (x₁−x₀)y + x₀y₁ − x₁y₀ = 0</div>
+    </div>
+    <div class="explanation">Points on the line: f = 0. One side: f &gt; 0. Other side: f &lt; 0. Used in the midpoint rasterization algorithm to decide which pixel to draw next.</div>
+    <div class="worked">
+      <div class="worked-header">✎ Worked Example</div>
+      <div class="worked-body">
+        <p>Line from (1, 1) to (4, 3):</p>
+        <pre>(y₀−y₁) = −2,  (x₁−x₀) = 3,  x₀y₁−x₁y₀ = −1
+f(x,y) = −2x + 3y − 1
+
+Test midpoint (3, 2.5):
+f(3, 2.5) = −6 + 7.5 − 1 = 0.5 > 0  → do NOT advance y</pre>
+      </div>
+    </div>
+
+    <hr>
+
+    <!-- 6.2 -->
+    <div class="formula-card">
+      <div class="formula-label"><span class="formula-num">6.2</span> Barycentric Coordinates</div>
+      <div class="formula-body">p(α, β, γ) = αa + βb + γc
+with α + β + γ = 1,  α = 1 − β − γ
+
+Inside: 0 &lt; α, β, γ &lt; 1
+Colour: c = αc₀ + βc₁ + γc₂</div>
+    </div>
+    <div class="worked">
+      <div class="worked-header">✎ Worked Example</div>
+      <div class="worked-body">
+        <p>Triangle a=(0,0), b=(4,0), c=(0,4). Point p=(1,1):</p>
+        <pre>4β = 1 → β = 0.25
+4γ = 1 → γ = 0.25
+α = 1 − 0.5 = 0.5   → all in (0,1) → INSIDE ✓
+
+c₀=red, c₁=green, c₂=blue:
+c = 0.5(1,0,0) + 0.25(0,1,0) + 0.25(0,0,1)
+  = (0.5, 0.25, 0.25)  ← reddish-purple</pre>
+      </div>
+    </div>
+
+    <hr>
+
+    <!-- 6.3 -->
+    <div class="formula-card">
+      <div class="formula-label"><span class="formula-num">6.3</span> Indexed Mesh Storage</div>
+      <div class="formula-body">Naïve:   9nt  units
+Indexed: 3nv + 3nt  units
+
+nt = number of triangles
+nv = number of unique vertices</div>
+    </div>
+    <div class="explanation">Each triangle has 3 vertices × 3 coordinates = 9 values naïvely. Indexed: store each unique vertex once (3nv) plus 3 indices per triangle (3nt).</div>
+    <div class="worked">
+      <div class="worked-header">✎ Worked Example</div>
+      <div class="worked-body">
+        <p>Cube: 8 unique vertices, 12 triangles:</p>
+        <pre>Naïve:   9 × 12 = 108 units
+Indexed: 3×8 + 3×12 = 24 + 36 = 60 units
+         → 44% less storage</pre>
+        <p>Savings are much greater for dense meshes.</p>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════ SECTION 7 ═══════════ -->
+<div class="section s7" id="s7">
+  <div class="section-header" onclick="toggleSection(this)">
+    <span class="section-num">§7</span>
+    <span class="section-name">Rotation About an Arbitrary Axis</span>
+    <span class="section-chevron">▾</span>
+  </div>
+  <div class="section-body">
+
+    <!-- 7.1 -->
+    <div class="formula-card">
+      <div class="formula-label"><span class="formula-num">7.1</span> Normalised Rotation Axis</div>
+      <div class="formula-body">V = P₁ − P₀
+u = V / |V| = (αx, αy, αz)</div>
+    </div>
+    <div class="worked">
+      <div class="worked-header">✎ Worked Example</div>
+      <div class="worked-body">
+        <p>P₀ = (1,1,1), P₁ = (3,2,1):<br>
+        V = (2, 1, 0), |V| = √5 ≈ 2.236<br>
+        u = (0.894, 0.447, 0.000)</p>
+      </div>
+    </div>
+
+    <hr>
+
+    <!-- 7.2 -->
+    <div class="formula-card">
+      <div class="formula-label"><span class="formula-num">7.2</span> Projection Length d</div>
+      <div class="formula-body">d = √(αy² + αz²)</div>
+    </div>
+    <div class="explanation">d is the length of the projection of u onto the y-z plane. Used to build alignment matrices Rx and Ry that align u with the z-axis before applying Rz(θ).</div>
+    <div class="worked">
+      <div class="worked-header">✎ Worked Example (continued from 7.1)</div>
+      <div class="worked-body">
+        <p>d = √(0.447² + 0.000²) = √(0.200) ≈ 0.447</p>
+      </div>
+    </div>
+
+    <hr>
+
+    <!-- 7.3 -->
+    <div class="formula-card">
+      <div class="formula-label"><span class="formula-num">7.3</span> Alignment Rotation Matrices</div>
+      <div class="formula-body">Rx(θx) = | 1     0       0    0 |
+         | 0   αz/d  −αy/d   0 |
+         | 0   αy/d   αz/d   0 |
+         | 0     0       0    1 |
+
+Ry(θy) = |  d    0   −αx   0 |
+         |  0    1     0   0 |
+         | αx    0     d   0 |
+         |  0    0     0   1 |</div>
+    </div>
+
+    <hr>
+
+    <!-- 7.4 -->
+    <div class="formula-card">
+      <div class="formula-label"><span class="formula-num">7.4</span> Full Arbitrary-Axis Rotation Matrix</div>
+      <div class="formula-body">R = T(P₀) · Rx(−θx) · Ry(−θy) · Rz(θ)
+        · Ry(θy) · Rx(θx) · T(−P₀)</div>
+    </div>
+    <div class="explanation">
+      Strategy (read right-to-left):
+    </div>
+    <ol style="margin: 8px 0 0 20px;">
+      <li style="font-size:13.5px; color: var(--text-2);">T(−P₀) — translate so P₀ is at origin</li>
+      <li style="font-size:13.5px; color: var(--text-2);">Rx(θx), Ry(θy) — align u with the z-axis</li>
+      <li style="font-size:13.5px; color: var(--text-2);">Rz(θ) — rotate by θ around z</li>
+      <li style="font-size:13.5px; color: var(--text-2);">Ry(−θy), Rx(−θx) — undo alignment</li>
+      <li style="font-size:13.5px; color: var(--text-2);">T(P₀) — translate back</li>
+    </ol>
+
+  </div>
+</div>
+
+<button id="top-btn" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+
+<script>
+  function toggleToc() {
+    document.getElementById('toc').classList.toggle('open');
+  }
+
+  function toggleSection(header) {
+    header.parentElement.classList.toggle('open');
+  }
+
+  window.addEventListener('scroll', () => {
+    document.getElementById('top-btn').classList.toggle('visible', window.scrollY > 300);
+  });
+
+  document.querySelectorAll('.toc-item').forEach(link => {
+    link.addEventListener('click', e => {
+      e.preventDefault();
+      const target = document.querySelector(link.getAttribute('href'));
+      if (target) {
+        target.classList.add('open');
+        target.scrollIntoView({behavior: 'smooth', block: 'start'});
+        document.getElementById('toc').classList.remove('open');
+      }
+    });
+  });
+</script>
+</body>
+</html>
