@@ -1,0 +1,1083 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>COS 344 — Past Papers</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:       #f0f4f0;
+    --surface:  #f8faf8;
+    --card:     #ffffff;
+    --border:   #d8e0d8;
+
+    --green:    #5a8a6a;
+    --green-lt: #d4e8da;
+    --teal:     #5a8a8a;
+    --teal-lt:  #d4e8e8;
+    --amber:    #b08040;
+    --amber-lt: #f0e4c8;
+    --rose:     #b06070;
+    --rose-lt:  #f0d8dc;
+    --correct:  #4a7a5a;
+    --correct-bg: #d8edd8;
+    --wrong:    #8a4040;
+    --wrong-bg: #f0d8d8;
+    --mark:     #6a5a30;
+    --mark-bg:  #f8f0d0;
+
+    --text:     #1e2e20;
+    --text-2:   #4a5e4a;
+    --text-3:   #8a9e8a;
+
+    --radius:   14px;
+    --radius-sm: 9px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    line-height: 1.65;
+    padding: 0 0 80px;
+  }
+
+  /* ── Header ── */
+  .header {
+    background: var(--green);
+    padding: 20px 18px 16px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 12px rgba(40,80,50,.25);
+  }
+  .header-eyebrow { font-size: 11px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: rgba(255,255,255,.7); margin-bottom: 4px; }
+  .header-title { font-family: 'DM Serif Display', serif; font-size: 22px; color: #fff; line-height: 1.2; }
+  .header-sub { font-size: 12px; color: rgba(255,255,255,.65); margin-top: 4px; }
+
+  /* ── TOC ── */
+  .toc { background: var(--card); margin: 14px 14px 0; border-radius: var(--radius); border: 1.5px solid var(--border); overflow: hidden; }
+  .toc-header { padding: 12px 16px; font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--text-3); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+  .toc-arrow { transition: transform .2s; }
+  .toc.open .toc-arrow { transform: rotate(180deg); }
+  .toc-list { display: none; padding: 8px 0; }
+  .toc.open .toc-list { display: block; }
+  .toc-item { display: block; padding: 7px 16px; font-size: 13.5px; color: var(--text-2); text-decoration: none; border-left: 3px solid transparent; }
+  .toc-item:active { background: var(--bg); border-left-color: var(--green); }
+  .toc-year { font-size: 11px; color: var(--text-3); margin-right: 6px; font-weight: 600; }
+
+  /* ── Paper blocks ── */
+  .paper { margin: 14px 14px 0; }
+  .paper-header {
+    border-radius: var(--radius) var(--radius) 0 0;
+    padding: 14px 16px 12px;
+    display: flex; align-items: center; gap: 12px;
+    cursor: pointer; user-select: none;
+  }
+  .paper-2024 .paper-header { background: var(--green-lt); border: 1.5px solid #a8c8b4; }
+  .paper-2025 .paper-header { background: var(--teal-lt); border: 1.5px solid #a0c4c4; }
+  .paper-tag { font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; opacity: .75; white-space: nowrap; }
+  .paper-title { font-family: 'DM Serif Display', serif; font-size: 18px; line-height: 1.2; flex: 1; }
+  .paper-chevron { font-size: 14px; opacity: .6; transition: transform .2s; flex-shrink: 0; }
+  .paper.open .paper-chevron { transform: rotate(180deg); }
+  .paper-body { display: none; background: var(--card); border: 1.5px solid var(--border); border-top: none; border-radius: 0 0 var(--radius) var(--radius); }
+  .paper.open .paper-body { display: block; }
+
+  /* ── Score banner ── */
+  .score-banner {
+    margin: 0;
+    padding: 10px 16px;
+    background: var(--mark-bg);
+    border-bottom: 1px solid #e0d090;
+    font-size: 13px;
+    color: var(--mark);
+    display: flex; gap: 16px; flex-wrap: wrap;
+  }
+  .score-item { font-weight: 600; }
+  .score-item span { font-weight: 400; }
+
+  /* ── Question blocks ── */
+  .question { border-bottom: 1.5px solid var(--border); }
+  .question:last-child { border-bottom: none; }
+  .question-header {
+    padding: 13px 16px 11px;
+    display: flex; align-items: center; gap: 10px;
+    cursor: pointer; user-select: none;
+    background: var(--surface);
+  }
+  .question-header:active { background: var(--bg); }
+  .q-num {
+    background: var(--green);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 9px;
+    border-radius: 20px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .paper-2025 .q-num { background: var(--teal); }
+  .q-title { font-size: 14px; font-weight: 500; flex: 1; color: var(--text); line-height: 1.35; }
+  .q-marks {
+    font-size: 11px;
+    color: var(--text-3);
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .q-chevron { font-size: 13px; opacity: .5; transition: transform .2s; flex-shrink: 0; }
+  .question.open .q-chevron { transform: rotate(180deg); }
+  .question-body { display: none; padding: 14px 16px; }
+  .question.open .question-body { display: block; }
+
+  /* ── Sub-questions ── */
+  .subq { margin-bottom: 16px; }
+  .subq:last-child { margin-bottom: 0; }
+  .subq-label { font-size: 12px; font-weight: 700; color: var(--text-3); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px; }
+  .subq-text { font-size: 14px; color: var(--text); margin-bottom: 8px; line-height: 1.5; }
+
+  /* ── MCQ options ── */
+  .options { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
+  .option {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 8px 12px;
+    border-radius: var(--radius-sm);
+    border: 1.5px solid var(--border);
+    font-size: 13.5px;
+    background: var(--surface);
+  }
+  .option.correct {
+    background: var(--correct-bg);
+    border-color: #80c090;
+    color: var(--correct);
+    font-weight: 500;
+  }
+  .option-letter { font-family: 'DM Mono', monospace; font-size: 12px; font-weight: 700; min-width: 18px; opacity: .6; margin-top: 1px; }
+  .option.correct .option-letter { opacity: 1; }
+  .correct-tick { margin-left: auto; font-size: 15px; flex-shrink: 0; }
+
+  /* ── Answer box ── */
+  .answer {
+    background: var(--correct-bg);
+    border: 1.5px solid #80c090;
+    border-radius: var(--radius-sm);
+    padding: 10px 14px;
+    margin-top: 6px;
+  }
+  .answer-label { font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--correct); margin-bottom: 6px; }
+  .answer-text { font-size: 13.5px; color: var(--text); line-height: 1.6; }
+
+  /* ── Warn / note box ── */
+  .note {
+    background: var(--amber-lt);
+    border: 1.5px solid #d0b878;
+    border-radius: var(--radius-sm);
+    padding: 9px 13px;
+    margin-top: 6px;
+    font-size: 13px;
+    color: var(--mark);
+  }
+  .note-label { font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--amber); margin-bottom: 4px; }
+
+  /* ── Marks lost ── */
+  .marks-lost {
+    background: var(--wrong-bg);
+    border: 1.5px solid #d09090;
+    border-radius: var(--radius-sm);
+    padding: 9px 13px;
+    margin-top: 6px;
+    font-size: 13px;
+    color: var(--wrong);
+  }
+  .marks-lost-label { font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--wrong); margin-bottom: 4px; }
+
+  /* ── Code blocks ── */
+  pre {
+    font-family: 'DM Mono', monospace;
+    background: #1a2420;
+    color: #d0e8d8;
+    border-radius: var(--radius-sm);
+    padding: 12px 14px;
+    font-size: 11.5px;
+    line-height: 1.6;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin: 8px 0;
+  }
+  code { font-family: 'DM Mono', monospace; background: #e8f0e8; color: #2a5a38; padding: 2px 6px; border-radius: 4px; font-size: 12.5px; }
+
+  /* ── Matrix display ── */
+  .matrix {
+    font-family: 'DM Mono', monospace;
+    background: #f0f4f8;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 10px 14px;
+    font-size: 12.5px;
+    line-height: 1.9;
+    margin: 6px 0;
+    color: var(--text);
+    overflow-x: auto;
+    white-space: pre;
+  }
+
+  /* ── Formula pill ── */
+  .formula { background: #e8f0f8; border: 1.5px solid #b0c8e0; border-radius: var(--radius-sm); padding: 8px 12px; font-family: 'DM Mono', monospace; font-size: 13px; color: #1a3050; margin: 6px 0; }
+
+  /* ── Tables ── */
+  .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 8px 0; border-radius: var(--radius-sm); border: 1.5px solid var(--border); }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 260px; }
+  th { background: var(--bg); font-weight: 600; text-align: left; padding: 8px 12px; color: var(--text-2); border-bottom: 1.5px solid var(--border); font-size: 12px; }
+  td { padding: 7px 12px; border-bottom: 1px solid var(--border); vertical-align: top; font-size: 13px; }
+  tr:last-child td { border-bottom: none; }
+
+  hr { border: none; border-top: 1px solid var(--border); margin: 12px 0; }
+  p { margin-bottom: 8px; }
+  p:last-child { margin-bottom: 0; }
+  strong { font-weight: 600; }
+  ul, ol { padding-left: 20px; margin: 6px 0; }
+  li { margin-bottom: 4px; font-size: 13.5px; color: var(--text-2); }
+
+  /* ── Scroll top ── */
+  #top-btn { position: fixed; bottom: 20px; right: 16px; background: var(--green); color: #fff; border: none; border-radius: 50%; width: 44px; height: 44px; font-size: 18px; cursor: pointer; box-shadow: 0 3px 12px rgba(40,80,50,.3); display: none; align-items: center; justify-content: center; z-index: 200; }
+  #top-btn.visible { display: flex; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-eyebrow">COS 344 · Computer Graphics</div>
+  <div class="header-title">Past Papers</div>
+  <div class="header-sub">Semester Test 1 · 2024 &amp; 2025 · with answers</div>
+</div>
+
+<!-- TOC -->
+<div class="toc" id="toc">
+  <div class="toc-header" onclick="toggleToc()">Papers <span class="toc-arrow">▼</span></div>
+  <div class="toc-list">
+    <a class="toc-item" href="#p2024"><span class="toc-year">2024</span>Semester Test 1 — 19/03/2024</a>
+    <a class="toc-item" href="#p2025"><span class="toc-year">2025</span>Semester Test 1 — 05/04/2025</a>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     2024 PAPER
+════════════════════════════════════════ -->
+<div class="paper paper-2024 open" id="p2024">
+  <div class="paper-header" onclick="togglePaper(this)">
+    <span class="paper-tag">2024</span>
+    <span class="paper-title">Semester Test 1</span>
+    <span style="font-size:12px; color:var(--text-3); flex-shrink:0;">19/03/2024</span>
+    <span class="paper-chevron">▾</span>
+  </div>
+  <div class="paper-body">
+    <div class="score-banner">
+      <span class="score-item">Total: <span>35 marks</span></span>
+      <span class="score-item">Q1: <span>6</span></span>
+      <span class="score-item">Q2: <span>6</span></span>
+      <span class="score-item">Q3: <span>4+12</span></span>
+      <span class="score-item">Q4: <span>8</span></span>
+      <span class="score-item">Q5–7: <span>varies</span></span>
+    </div>
+
+    <!-- Q1 -->
+    <div class="question open" id="q2024-1">
+      <div class="question-header" onclick="toggleQuestion(this)">
+        <span class="q-num">Q1</span>
+        <span class="q-title">Multiple Choice</span>
+        <span class="q-marks">6 marks</span>
+        <span class="q-chevron">▾</span>
+      </div>
+      <div class="question-body">
+
+        <div class="subq">
+          <div class="subq-label">1.1</div>
+          <div class="subq-text">Designing where each vertex of a polygon should be placed to create the desired shape, forms part of what stage of computer graphics?</div>
+          <div class="options">
+            <div class="option"><span class="option-letter">a</span>Rendering</div>
+            <div class="option correct"><span class="option-letter">b</span>Modelling<span class="correct-tick">✓</span></div>
+            <div class="option"><span class="option-letter">c</span>Rasterization</div>
+            <div class="option"><span class="option-letter">d</span>Animating</div>
+            <div class="option"><span class="option-letter">e</span>None of the above</div>
+          </div>
+          <div class="answer"><div class="answer-label">Why</div><div class="answer-text">Modelling is the mathematical specification of objects — deciding where vertices go to form the desired shape is exactly the modelling stage, before any rendering occurs.</div></div>
+        </div>
+
+        <hr>
+        <div class="subq">
+          <div class="subq-label">1.2</div>
+          <div class="subq-text">The illusion of moving a polygon across the screen can be achieved by redrawing the same polygon repeatedly, with slight changes in each vertex's x-value.</div>
+          <div class="options">
+            <div class="option correct"><span class="option-letter">a</span>True<span class="correct-tick">✓</span></div>
+            <div class="option"><span class="option-letter">b</span>False</div>
+          </div>
+          <div class="answer"><div class="answer-label">Why</div><div class="answer-text">This is the basis of animation — incrementally updating vertex positions each frame creates perceived motion.</div></div>
+        </div>
+
+        <hr>
+        <div class="subq">
+          <div class="subq-label">1.3</div>
+          <div class="subq-text">Given a raster image that has 1024 × 980 pixels, what is the shape of the underlying 2D array?</div>
+          <div class="options">
+            <div class="option"><span class="option-letter">a</span>Height: 1024, width: 980</div>
+            <div class="option correct"><span class="option-letter">b</span>Height: 980, width: 1024<span class="correct-tick">✓</span></div>
+            <div class="option"><span class="option-letter">c</span>Height: 10, width: 9</div>
+            <div class="option"><span class="option-letter">d</span>Height: 1024, width: 1024</div>
+            <div class="option"><span class="option-letter">e</span>Height: 980, width: 980</div>
+          </div>
+          <div class="answer"><div class="answer-label">Why</div><div class="answer-text">The convention is: the first dimension of the array is rows (height), the second is columns (width). A 1024×980 image means 1024 columns wide and 980 rows tall, so the array is [980][1024] — height 980, width 1024.</div></div>
+        </div>
+
+        <hr>
+        <div class="subq">
+          <div class="subq-label">1.4</div>
+          <div class="subq-text">Given a set of rays, which property of the ray equation can be used to identify <strong>parallel</strong> projection rays?</div>
+          <div class="options">
+            <div class="option"><span class="option-letter">a</span>The origin.</div>
+            <div class="option"><span class="option-letter">b</span>The length of the ray.</div>
+            <div class="option correct"><span class="option-letter">c</span>The direction.<span class="correct-tick">✓</span></div>
+            <div class="option"><span class="option-letter">d</span>The cross product between the ray and the closest ray.</div>
+          </div>
+          <div class="answer"><div class="answer-label">Why</div><div class="answer-text">In orthographic (parallel) projection, all rays share the <strong>same direction</strong> (−ŵ) but have different origins. You identify them as parallel because their direction vectors are identical.</div></div>
+        </div>
+
+        <hr>
+        <div class="subq">
+          <div class="subq-label">1.5</div>
+          <div class="subq-text">Given a set of rays, which property of the ray equation can be used to identify <strong>perspective</strong> projection rays?</div>
+          <div class="options">
+            <div class="option correct"><span class="option-letter">a</span>The origin.<span class="correct-tick">✓</span></div>
+            <div class="option"><span class="option-letter">b</span>The length of the ray.</div>
+            <div class="option"><span class="option-letter">c</span>The direction.</div>
+            <div class="option"><span class="option-letter">d</span>The cross product between the ray and the closest ray.</div>
+          </div>
+          <div class="answer"><div class="answer-label">Why</div><div class="answer-text">In perspective projection, all rays share the <strong>same origin</strong> (the eye/viewpoint) but diverge in different directions. Identifying that all rays emanate from one point tells you it's perspective projection.</div></div>
+        </div>
+
+        <hr>
+        <div class="subq">
+          <div class="subq-label">1.6</div>
+          <div class="subq-text">Which of the following light sources is independent of the viewing direction and light direction?</div>
+          <div class="options">
+            <div class="option"><span class="option-letter">a</span>Point light source.</div>
+            <div class="option correct"><span class="option-letter">b</span>Ambient light source.<span class="correct-tick">✓</span></div>
+            <div class="option"><span class="option-letter">c</span>Directional light source.</div>
+            <div class="option"><span class="option-letter">d</span>Universal light source.</div>
+            <div class="option"><span class="option-letter">e</span>Spot light source.</div>
+          </div>
+          <div class="answer"><div class="answer-label">Why</div><div class="answer-text">Ambient light is directionless — it fills all surfaces uniformly. The formula Lr = ka · Ia involves no normal, no light direction, and no view direction.</div></div>
+        </div>
+
+      </div>
+    </div><!-- /Q1 -->
+
+    <!-- Q2 -->
+    <div class="question" id="q2024-2">
+      <div class="question-header" onclick="toggleQuestion(this)">
+        <span class="q-num">Q2</span>
+        <span class="q-title">Colour &amp; APIs</span>
+        <span class="q-marks">6 marks</span>
+        <span class="q-chevron">▾</span>
+      </div>
+      <div class="question-body">
+
+        <div class="subq">
+          <div class="subq-label">2.1 (2 marks)</div>
+          <div class="subq-text">Compare the two main types of computer graphic APIs, by discussing one advantage and one disadvantage of each API.</div>
+          <div class="answer">
+            <div class="answer-label">Model Answer</div>
+            <div class="answer-text">
+              <strong>Integrated API</strong> (e.g., Java Swing):<br>
+              ✓ Advantage: Features are built into the language — no external libraries needed, simpler setup.<br>
+              ✗ Disadvantage: To add new features, the language itself must be updated — slow to evolve.<br><br>
+              <strong>Library-based API</strong> (e.g., OpenGL + GLFW):<br>
+              ✓ Advantage: The library can be updated independently of the language — more flexible.<br>
+              ✗ Disadvantage: The library must be installed separately on every machine that runs the application.
+            </div>
+          </div>
+        </div>
+
+        <hr>
+        <div class="subq">
+          <div class="subq-label">2.2 (1 mark)</div>
+          <div class="subq-text">When calculating the possible levels of an RGB colour system we divided by 3, but for RGBA we divided by 4. Explain why.</div>
+          <div class="answer">
+            <div class="answer-label">Model Answer</div>
+            <div class="answer-text">In an RGB system the n bits are shared equally among <strong>3 channels</strong> (R, G, B), so each gets n/3 bits. In RGBA there is a fourth channel (alpha), so the bits are shared among <strong>4 channels</strong>, giving each channel n/4 bits. The divisor matches the number of channels.</div>
+          </div>
+        </div>
+
+        <hr>
+        <div class="subq">
+          <div class="subq-label">2.3 (3 marks) — Alpha compositing examples</div>
+          <div class="subq-text">Give an example alpha value for each use case.</div>
+          <div class="options">
+            <div class="option correct"><span class="option-letter">a</span>Partially transparent foreground pixel: <strong>α = 0.5</strong> (any value strictly between 0 and 1)<span class="correct-tick">✓</span></div>
+            <div class="option correct"><span class="option-letter">b</span>Fully transparent foreground pixel: <strong>α = 0</strong><span class="correct-tick">✓</span></div>
+            <div class="option correct"><span class="option-letter">c</span>Fully opaque foreground pixel: <strong>α = 1</strong><span class="correct-tick">✓</span></div>
+          </div>
+        </div>
+
+      </div>
+    </div><!-- /Q2 -->
+
+    <!-- Q3 -->
+    <div class="question" id="q2024-3">
+      <div class="question-header" onclick="toggleQuestion(this)">
+        <span class="q-num">Q3</span>
+        <span class="q-title">Object-order vs Image-order Rendering</span>
+        <span class="q-marks">4 marks</span>
+        <span class="q-chevron">▾</span>
+      </div>
+      <div class="question-body">
+        <div class="subq">
+          <div class="subq-label">3.1 (4 marks)</div>
+          <div class="subq-text">Differentiate between object-order and image-order rendering with regards to: efficiency for larger/smaller numbers of objects, underlying mathematical requirements, and ease of implementation.</div>
+          <div class="answer">
+            <div class="answer-label">Model Answer</div>
+            <div class="answer-text">
+              <strong>Object-order rendering</strong> (e.g., rasterization):<br>
+              • More efficient for <em>smaller</em> numbers of objects — iterates per object.<br>
+              • Less efficient for <em>large</em> numbers of objects — must process every object for every frame.<br>
+              • Simpler mathematical model — no ray intersection math needed.<br>
+              • Easier to implement at the basic level (OpenGL pipeline is object-order).<br><br>
+              <strong>Image-order rendering</strong> (e.g., ray tracing):<br>
+              • More efficient for <em>larger</em> numbers of objects — only processes objects that rays hit.<br>
+              • Less efficient for <em>small</em> numbers of objects — casts a ray per pixel regardless.<br>
+              • Requires stronger mathematical foundations (ray equations, intersections).<br>
+              • More complex to implement correctly.
+            </div>
+          </div>
+          <div class="marks-lost"><div class="marks-lost-label">⚠ Common mistake in 2024</div>The 2024 answer was marked "Vague!" — simply saying "less efficient for large" without explaining <em>why</em> or covering all four bullet points lost marks.</div>
+        </div>
+      </div>
+    </div><!-- /Q3 -->
+
+    <!-- Q4 -->
+    <div class="question" id="q2024-4">
+      <div class="question-header" onclick="toggleQuestion(this)">
+        <span class="q-num">Q4</span>
+        <span class="q-title">Ray Tracer Scene Analysis</span>
+        <span class="q-marks">12 marks</span>
+        <span class="q-chevron">▾</span>
+      </div>
+      <div class="question-body">
+        <div class="note"><div class="note-label">Scene context</div>The test paper = surface. The closest light in the venue = light source. Your eye = camera.</div>
+
+        <div class="subq">
+          <div class="subq-label">4.1a — Viewing ray generation (1)</div>
+          <div class="answer"><div class="answer-label">Answer</div><div class="answer-text">Your eyes looking at the test paper — the eye generates rays toward the test surface.</div></div>
+        </div>
+        <div class="subq">
+          <div class="subq-label">4.1b — Viewing ray intersection (1)</div>
+          <div class="answer"><div class="answer-label">Answer</div><div class="answer-text">Your eyes looking at / seeing the test page — the viewing ray hits the surface of the test paper.</div></div>
+        </div>
+        <div class="subq">
+          <div class="subq-label">4.1c — Light ray generation (1)</div>
+          <div class="answer"><div class="answer-label">Answer</div><div class="answer-text">The light in the venue — the light source generates rays toward the scene.</div></div>
+        </div>
+        <div class="subq">
+          <div class="subq-label">4.1d — Light ray intersection (1)</div>
+          <div class="answer"><div class="answer-label">Answer</div><div class="answer-text">The test paper being made visible by the light in the venue — the light ray hits the test surface.</div></div>
+        </div>
+
+        <hr>
+        <div class="subq">
+          <div class="subq-label">4.2 (1 mark)</div>
+          <div class="subq-text">What would the resulting effect be if the test is not the first surface the <strong>light</strong> ray intersects with?</div>
+          <div class="answer"><div class="answer-label">Answer</div><div class="answer-text">A <strong>shadow</strong> would be cast on the test — another object blocks the light ray before it reaches the test paper, so the test is in shadow.</div></div>
+        </div>
+
+        <hr>
+        <div class="subq">
+          <div class="subq-label">4.3 (1 mark)</div>
+          <div class="subq-text">What would the resulting effect be if the test is not the first surface the <strong>viewing</strong> ray intersects with?</div>
+          <div class="answer"><div class="answer-label">Answer</div><div class="answer-text">The test would be partially, or entirely, <strong>obscured</strong> to your eyes — another surface is in front of the test paper from the camera's perspective.</div></div>
+        </div>
+
+        <hr>
+        <div class="subq">
+          <div class="subq-label">4.4 (3 marks)</div>
+          <div class="subq-text">Define the light source and explain how irradiance changes if the light moves further away and why.</div>
+          <div class="answer"><div class="answer-label">Answer</div><div class="answer-text">
+            The light source is a <strong>point light</strong> (the closest light in the venue illuminates from a single point).<br><br>
+            If the light moves further away, the <strong>irradiance decreases</strong>. The irradiance formula is:<br>
+            <span style="font-family: monospace;">E = I / r²</span><br>
+            As r increases, E falls off with the inverse square of the distance. At twice the distance, irradiance drops to ¼ — the light spreads over a larger sphere surface area as it travels outward.
+          </div></div>
+        </div>
+
+        <hr>
+        <div class="subq">
+          <div class="subq-label">4.5 (1 mark)</div>
+          <div class="subq-text">What type of reflection is caused by the material of the test?</div>
+          <div class="answer"><div class="answer-label">Answer</div><div class="answer-text"><strong>Lambertian (diffuse) reflection</strong> — paper is a matte surface that reflects light equally in all directions. The 2024 answer said "specular reflection" which was wrong (specular is for glossy/shiny surfaces).</div></div>
+          <div class="marks-lost"><div class="marks-lost-label">⚠ Incorrect in 2024</div>The student answered "specular reflection" — this was marked wrong. Paper is a rough, matte material → Lambertian diffuse reflection.</div>
+        </div>
+
+        <hr>
+        <div class="subq">
+          <div class="subq-label">4.6 (2 marks)</div>
+          <div class="subq-text">The venue is filled with 200 tests. What data structure can efficiently find tests a light ray intersects with, and why?</div>
+          <div class="answer"><div class="answer-label">Answer</div><div class="answer-text">
+            A <strong>spatial data structure</strong> such as a <strong>Bounding Volume Hierarchy (BVH)</strong> or uniform spatial subdivision grid.<br><br>
+            These group objects into regions so that a ray can quickly eliminate large groups of non-intersecting objects with a single bounding-box test, rather than testing all 200 individually. This reduces intersection tests from O(n) to O(log n).
+          </div></div>
+          <div class="marks-lost"><div class="marks-lost-label">⚠ Incorrect in 2024</div>"Scene graph" was given — scene graphs manage transformation hierarchies, not spatial queries. The correct answer is a spatial partitioning structure (BVH, grid, k-d tree).</div>
+        </div>
+
+      </div>
+    </div><!-- /Q4 -->
+
+    <!-- Q5 -->
+    <div class="question" id="q2024-5">
+      <div class="question-header" onclick="toggleQuestion(this)">
+        <span class="q-num">Q5</span>
+        <span class="q-title">OpenGL Drawing Primitives</span>
+        <span class="q-marks">8 marks</span>
+        <span class="q-chevron">▾</span>
+      </div>
+      <div class="question-body">
+        <div class="note"><div class="note-label">Shape context</div>A 7-vertex irregular polygon: P1–P2–P3–P4 form inner kite shape; P4–P5–P6–P7 form outer kite. Initial point P1.</div>
+
+        <div class="subq">
+          <div class="subq-label">5.1a — GL_LINES (1 mark)</div>
+          <div class="subq-text">Give the array to replicate the image using GL_LINES.</div>
+          <div class="answer"><div class="answer-label">Answer</div><div class="answer-text">GL_LINES draws each pair as a separate line segment.<br><code>P1P2, P2P3, P3P4, P4P5, P5P6, P6P7, P7P1</code></div></div>
+        </div>
+
+        <div class="subq">
+          <div class="subq-label">5.1b — GL_LINE_STRIP (1 mark)</div>
+          <div class="answer"><div class="answer-label">Answer</div><div class="answer-text">Connected line through all vertices, no closing edge.<br><code>P1 P2 P3 P4 P5 P6 P7</code></div></div>
+        </div>
+
+        <div class="subq">
+          <div class="subq-label">5.1c — GL_LINE_LOOP (1 mark)</div>
+          <div class="answer"><div class="answer-label">Answer</div><div class="answer-text">Like strip but also connects last vertex back to first.<br><code>P1 P2 P3 P4 P5 P6 P7 P1</code></div></div>
+        </div>
+
+        <hr>
+        <div class="subq">
+          <div class="subq-label">5.2 (2 marks)</div>
+          <div class="subq-text">Give the <strong>minimal</strong> list of points to create a polygon containing all points using GL_TRIANGLE_FAN or similar.</div>
+          <div class="answer"><div class="answer-label">Answer</div><div class="answer-text">The outer hull of all 7 points: <code>P1 P2 P7 P6 P5 P1</code> (convex hull traversal closing back to P1).</div></div>
+        </div>
+
+        <hr>
+        <div class="subq">
+          <div class="subq-label">5.3a — GL_TRIANGLES (1 mark)</div>
+          <div class="subq-text">Pentagon (P1–P5): minimal points to draw the filled shape.</div>
+          <div class="answer"><div class="answer-label">Answer</div><div class="answer-text">Each triple is an independent triangle. Fan from P1:<br><code>P1 P2 P3  P3 P4 P5  P5 P1 P3</code></div></div>
+        </div>
+
+        <div class="subq">
+          <div class="subq-label">5.3b — GL_TRIANGLE_STRIP (1 mark)</div>
+          <div class="answer"><div class="answer-label">Answer</div><div class="answer-text">Each new vertex forms a triangle with the previous two:<br><code>P1 P2 P3 P1 P4 P4 P5</code><br>(Shared vertices reused — no full repetition needed.)</div></div>
+        </div>
+
+        <div class="subq">
+          <div class="subq-label">5.3c — GL_TRIANGLE_FAN (1 mark)</div>
+          <div class="answer"><div class="answer-label">Answer</div><div class="answer-text">All triangles share the first vertex P1:<br><code>P1 P2 P3 P1 P3 P4 P1 P4 P5</code></div></div>
+        </div>
+
+      </div>
+    </div><!-- /Q5 -->
+
+    <!-- Q6 -->
+    <div class="question" id="q2024-6">
+      <div class="question-header" onclick="toggleQuestion(this)">
+        <span class="q-num">Q6</span>
+        <span class="q-title">3D Transformation Matrices</span>
+        <span class="q-marks">7 marks</span>
+        <span class="q-chevron">▾</span>
+      </div>
+      <div class="question-body">
+        <div class="note"><div class="note-label">Setup</div>Square (made of two triangles) centred at [7, 4, −1]ᵀ. Transforms in order: (1) scale by 2 in all directions, (2) rotate 45° about x-axis, (3) translate to [3, −5, 2]ᵀ.</div>
+
+        <div class="subq">
+          <div class="subq-label">6.1 (7 marks) — Individual matrices with preparation matrices</div>
+          <div class="answer">
+            <div class="answer-label">Key Insight</div>
+            <div class="answer-text">Scale and rotate around the object's <em>local</em> axis (not world origin) — so you need preparation matrices: translate to origin first, then transform, then translate back.</div>
+          </div>
+
+          <p style="font-size:13px; color:var(--text-2); margin-top:10px;"><strong>Step 1 — Scale by 2:</strong> (rotate around local axis → prep needed)</p>
+          <div class="matrix">T⁻¹ (move to origin):
+[1  0  0  -7]
+[0  1  0  -4]
+[0  0  1   1]
+[0  0  0   1]
+
+S (scale by 2):
+[2  0  0  0]
+[0  2  0  0]
+[0  0  2  0]
+[0  0  0  1]
+
+T (move back):
+[1  0  0  7]
+[0  1  0  4]
+[0  0  1 -1]
+[0  0  0  1]</div>
+
+          <p style="font-size:13px; color:var(--text-2); margin-top:10px;"><strong>Step 2 — Rotate 45° about x-axis (local axis):</strong></p>
+          <div class="matrix">Rx(45°):
+[1    0         0      0]
+[0  cos(45°)  -sin(45°) 0]
+[0  sin(45°)   cos(45°) 0]
+[0    0         0      1]
+
+=
+[1    0      0    0]
+[0   √2/2  -√2/2  0]
+[0   √2/2   √2/2  0]
+[0    0      0    1]</div>
+
+          <p style="font-size:13px; color:var(--text-2); margin-top:10px;"><strong>Step 3 — Translate to [3, −5, 2]:</strong></p>
+          <div class="matrix">T_final:
+[1  0  0   3]
+[0  1  0  -5]
+[0  0  1   2]
+[0  0  0   1]</div>
+
+          <div class="answer"><div class="answer-label">Reading order (right to left)</div><div class="answer-text">M = T_final · Rx(45°) · T_back · S · T_to_origin<br>Apply right-to-left: T_to_origin first, then S, then T_back, then Rx, then T_final.</div></div>
+        </div>
+      </div>
+    </div><!-- /Q6 -->
+
+    <!-- Q7 -->
+    <div class="question" id="q2024-7">
+      <div class="question-header" onclick="toggleQuestion(this)">
+        <span class="q-num">Q7</span>
+        <span class="q-title">Midpoint Line Algorithm</span>
+        <span class="q-marks">4 marks</span>
+        <span class="q-chevron">▾</span>
+      </div>
+      <div class="question-body">
+        <div class="subq">
+          <div class="subq-label">7.1 — f(x) = −0.3x + 5, algorithm runs x = 0 to 10</div>
+          <div class="answer">
+            <div class="answer-label">Step-through</div>
+            <div class="answer-text">
+              y starts at f(0) = 5. At each step check: |f(xᵢ₊₁) − f(xᵢ)| &lt; 0.3 → if true, y stays; if false, y decrements by 1.<br><br>
+              f(x) = −0.3x + 5 has slope −0.3, so |Δf| = 0.3 each step — the condition is &lt; 0.3 (strict), so y never decrements. The pixel stays at y=5 for all x from 0 to 10.<br><br>
+              <strong>Result:</strong> A horizontal row of pixels drawn at y=5 from x=0 to x=10.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div><!-- /Q7 -->
+
+  </div>
+</div><!-- /2024 paper -->
+
+
+<!-- ═══════════════════════════════════════
+     2025 PAPER
+════════════════════════════════════════ -->
+<div class="paper paper-2025" id="p2025">
+  <div class="paper-header" onclick="togglePaper(this)">
+    <span class="paper-tag">2025</span>
+    <span class="paper-title">Semester Test 1</span>
+    <span style="font-size:12px; color:var(--text-3); flex-shrink:0;">05/04/2025</span>
+    <span class="paper-chevron">▾</span>
+  </div>
+  <div class="paper-body">
+    <div class="score-banner">
+      <span class="score-item">Total: <span>50 marks</span></span>
+      <span class="score-item">Q1: <span>6</span></span>
+      <span class="score-item">Q2: <span>10</span></span>
+      <span class="score-item">Q3: <span>4</span></span>
+      <span class="score-item">Q4: <span>14</span></span>
+      <span class="score-item">Q5: <span>16</span></span>
+      <span class="score-item">Student scored: <span>~29/50</span></span>
+    </div>
+
+    <!-- Q1 -->
+    <div class="question open" id="q2025-1">
+      <div class="question-header" onclick="toggleQuestion(this)">
+        <span class="q-num">Q1</span>
+        <span class="q-title">Multiple Choice</span>
+        <span class="q-marks">6 marks</span>
+        <span class="q-chevron">▾</span>
+      </div>
+      <div class="question-body">
+
+        <div class="subq">
+          <div class="subq-label">1.1</div>
+          <div class="subq-text">Given a square raster image composed of 1,000,000 pixels, what is the shape of the underlying 2D array?</div>
+          <div class="options">
+            <div class="option"><span class="option-letter">A</span>250 × 250</div>
+            <div class="option"><span class="option-letter">B</span>500 × 500</div>
+            <div class="option correct"><span class="option-letter">C</span>1000 × 1000<span class="correct-tick">✓</span></div>
+            <div class="option"><span class="option-letter">D</span>10000 × 10000</div>
+          </div>
+          <div class="answer"><div class="answer-label">Why</div><div class="answer-text">√1,000,000 = 1000. A square image with 1 million pixels must be 1000 columns × 1000 rows.</div></div>
+        </div>
+
+        <hr>
+        <div class="subq">
+          <div class="subq-label">1.2</div>
+          <div class="subq-text">Consider the matrix [[1,0,0.5],[0,1,1],[0,0,1]]. What type of transformation will be achieved?</div>
+          <div class="options">
+            <div class="option correct"><span class="option-letter">A</span>Translation<span class="correct-tick">✓</span></div>
+            <div class="option"><span class="option-letter">B</span>Scaling</div>
+            <div class="option"><span class="option-letter">C</span>Sheering</div>
+            <div class="option"><span class="option-letter">D</span>Rotation</div>
+            <div class="option"><span class="option-letter">E</span>None of the above</div>
+          </div>
+          <div class="answer"><div class="answer-label">Why</div><div class="answer-text">The matrix has 1s on the diagonal and non-zero values in the last column (xt=0.5, yt=1) — this is the standard homogeneous 2D translation matrix. The student marked this correctly.</div></div>
+          <div class="marks-lost"><div class="marks-lost-label">⚠ Watch out — also marked C (Sheering)</div>Only Translation (A) is correct. The top-right value 0.5 is the x-translation, not a shear — shear would be off-diagonal in the 2×2 block, not in the translation column.</div>
+        </div>
+
+        <hr>
+        <div class="subq">
+          <div class="subq-label">1.3</div>
+          <div class="subq-text">Consider the matrix [[1,0,cos(π/2)],[0,1,sin(1/π)],[0,0,0.1]] applied to [π/e, π/e, 0]ᵀ. Which best describes the result?</div>
+          <div class="options">
+            <div class="option"><span class="option-letter">A</span>Translation</div>
+            <div class="option"><span class="option-letter">B</span>Scaling</div>
+            <div class="option"><span class="option-letter">C</span>Sheering</div>
+            <div class="option"><span class="option-letter">D</span>Rotation</div>
+            <div class="option correct"><span class="option-letter">E</span>None of the above<span class="correct-tick">✓</span></div>
+          </div>
+          <div class="answer"><div class="answer-label">Why</div><div class="answer-text">The vector has w=0 (a direction vector, not a point). Applying translation to a direction has no effect — the translation column is multiplied by 0. More critically, the (2,2) entry is 0.1, not 1, meaning this isn't a standard homogeneous matrix. The result is "none of the above."</div></div>
+          <div class="marks-lost"><div class="marks-lost-label">⚠ Marked wrong in 2025</div>The student answered A (Translation) — incorrect. Key insight: w=0 means the translation columns don't apply. The non-standard last row also makes this no recognised transform.</div>
+        </div>
+
+        <hr>
+        <div class="subq">
+          <div class="subq-label">1.4</div>
+          <div class="subq-text">Which property identifies <strong>parallel</strong> projection rays?</div>
+          <div class="options">
+            <div class="option"><span class="option-letter">A</span>The origin.</div>
+            <div class="option"><span class="option-letter">B</span>The length of the ray.</div>
+            <div class="option correct"><span class="option-letter">C</span>The direction.<span class="correct-tick">✓</span></div>
+            <div class="option"><span class="option-letter">D</span>The cross product between the ray and the closest ray.</div>
+          </div>
+          <div class="answer"><div class="answer-label">Why</div><div class="answer-text">All parallel (orthographic) rays share the same direction vector −ŵ. Same as 2024 Q1.4.</div></div>
+        </div>
+
+        <hr>
+        <div class="subq">
+          <div class="subq-label">1.5</div>
+          <div class="subq-text">Which property identifies <strong>perspective</strong> projection rays?</div>
+          <div class="options">
+            <div class="option correct"><span class="option-letter">A</span>The origin.<span class="correct-tick">✓</span></div>
+            <div class="option"><span class="option-letter">B</span>The length of the ray.</div>
+            <div class="option"><span class="option-letter">C</span>The direction.</div>
+            <div class="option"><span class="option-letter">D</span>The cross product.</div>
+          </div>
+        </div>
+
+        <hr>
+        <div class="subq">
+          <div class="subq-label">1.6</div>
+          <div class="subq-text">Which light source is independent of viewing direction and light direction?</div>
+          <div class="options">
+            <div class="option"><span class="option-letter">A</span>Point light source.</div>
+            <div class="option correct"><span class="option-letter">B</span>Ambient light source.<span class="correct-tick">✓</span></div>
+            <div class="option"><span class="option-letter">C</span>Directional light source.</div>
+            <div class="option"><span class="option-letter">D</span>Universal light source.</div>
+            <div class="option"><span class="option-letter">E</span>Spot light source.</div>
+          </div>
+        </div>
+
+      </div>
+    </div><!-- /Q1 -->
+
+    <!-- Q2 -->
+    <div class="question" id="q2025-2">
+      <div class="question-header" onclick="toggleQuestion(this)">
+        <span class="q-num">Q2</span>
+        <span class="q-title">Animation, Rendering &amp; APIs</span>
+        <span class="q-marks">10 marks</span>
+        <span class="q-chevron">▾</span>
+      </div>
+      <div class="question-body">
+
+        <div class="subq">
+          <div class="subq-label">2.1 (2 marks)</div>
+          <div class="subq-text">"Computer graphics is the process of creating an illusion to trick the user into correctly observing the render." Explain how this relates to animation and 3D rendering respectively.</div>
+          <div class="answer">
+            <div class="answer-label">Model Answer</div>
+            <div class="answer-text">
+              <strong>3D rendering:</strong> It renders a 3D scene onto a 2D image plane (like a TV screen or monitor) — tricking the viewer into perceiving depth and dimension that doesn't physically exist on the flat display.<br><br>
+              <strong>Animation:</strong> A sequence of rendered frames shown rapidly enough to create the illusion of continuous motion — the viewer is tricked into seeing movement from static images.
+            </div>
+          </div>
+          <div class="marks-lost"><div class="marks-lost-label">⚠ Lost marks in 2025</div>The student answered only about rendering. Animation was only partially addressed. Both needed separate, clear explanations.</div>
+        </div>
+
+        <hr>
+        <div class="subq">
+          <div class="subq-label">2.2 (2 marks) — Integrated vs Library APIs</div>
+          <div class="subq-text">Given this table of facts, match each to the correct API advantage/disadvantage:</div>
+          <div class="table-wrap"><table>
+            <tr><th>#</th><th>Fact</th></tr>
+            <tr><td>1</td><td>Features built into the language — not reliant on external libraries.</td></tr>
+            <tr><td>2</td><td>The library needs to be installed on the computer running the application.</td></tr>
+            <tr><td>3</td><td>The library can be updated without changes to the underlying language.</td></tr>
+            <tr><td>4</td><td>For features to be added, the language itself needs to be updated.</td></tr>
+          </table></div>
+          <div class="answer">
+            <div class="answer-label">Answers</div>
+            <div class="answer-text">
+              a) Advantage of <strong>integrated</strong> API → Fact <strong>1</strong> ✓<br>
+              b) Disadvantage of <strong>integrated</strong> API → Fact <strong>4</strong> ✓<br>
+              c) Advantage of <strong>library</strong> API → Fact <strong>3</strong> ✓<br>
+              d) Disadvantage of <strong>library</strong> API → Fact <strong>2</strong> ✓
+            </div>
+          </div>
+        </div>
+
+        <hr>
+        <div class="subq">
+          <div class="subq-label">2.3 (remaining marks) — Alpha compositing</div>
+          <div class="subq-text">Part iii: &lt;&lt;C&gt;&gt; operator — what is the alpha value?</div>
+          <div class="answer"><div class="answer-label">Answer</div><div class="answer-text">The &lt;&lt;C&gt;&gt; / over operator with a fully opaque composite means α = 1 (not 0). The student answered α=0 — this was incorrect.</div></div>
+          <div class="marks-lost"><div class="marks-lost-label">⚠ Lost mark in 2025</div>Student answered α=0. Correct answer is α=1 — &lt;&lt;C&gt;&gt; means the foreground is fully opaque, completely replacing the background.</div>
+        </div>
+
+      </div>
+    </div><!-- /Q2 -->
+
+    <!-- Q3 -->
+    <div class="question" id="q2025-3">
+      <div class="question-header" onclick="toggleQuestion(this)">
+        <span class="q-num">Q3</span>
+        <span class="q-title">Object-order vs Image-order — Scenarios</span>
+        <span class="q-marks">4 marks</span>
+        <span class="q-chevron">▾</span>
+      </div>
+      <div class="question-body">
+        <div class="note"><div class="note-label">Rule of thumb</div>Object-order (rasterization) = efficient for fewer objects. Image-order (ray tracing) = efficient for more objects. Always give a motivation or marks are 0.</div>
+
+        <div class="subq">
+          <div class="subq-label">3.1a — A scene with over 200 objects (1 mark)</div>
+          <div class="answer"><div class="answer-label">Answer</div><div class="answer-text"><strong>Object-order rendering</strong> is more appropriate. With many objects, object-order processes each object once and only touches pixels it covers — more scalable for large scenes without needing per-pixel ray casting overhead.</div></div>
+          <div class="marks-lost"><div class="marks-lost-label">⚠ Lost marks in 2025</div>The student answered "Image-order rendering" — incorrect. For a large number of objects, object-order (rasterization) is actually more efficient because it leverages hardware acceleration and avoids the overhead of casting rays through empty space per pixel.</div>
+        </div>
+
+        <div class="subq">
+          <div class="subq-label">3.1b — A scene with a single object (1 mark)</div>
+          <div class="answer"><div class="answer-label">Answer</div><div class="answer-text"><strong>Image-order rendering</strong> is more appropriate. With very few objects, the per-pixel ray casting cost is acceptable, and it can produce more accurate lighting/shadows for that single object.</div></div>
+          <div class="marks-lost"><div class="marks-lost-label">⚠ Lost marks in 2025</div>The student answered "Object-order" — same reasoning confusion as 3.1a. The answers to a and b were swapped.</div>
+        </div>
+
+        <div class="subq">
+          <div class="subq-label">3.1c — A novice programmer with a weak math background (2 marks)</div>
+          <div class="answer"><div class="answer-label">Answer</div><div class="answer-text"><strong>Object-order rendering</strong> is more appropriate. Object-order (rasterization via OpenGL) abstracts away complex mathematics — the programmer specifies vertices and the pipeline handles the rest. Image-order rendering requires strong understanding of ray equations, intersection mathematics, and vector operations.</div></div>
+        </div>
+
+      </div>
+    </div><!-- /Q3 -->
+
+    <!-- Q4 -->
+    <div class="question" id="q2025-4">
+      <div class="question-header" onclick="toggleQuestion(this)">
+        <span class="q-num">Q4</span>
+        <span class="q-title">Ray Tracer — Chalkboard Scene</span>
+        <span class="q-marks">14 marks</span>
+        <span class="q-chevron">▾</span>
+      </div>
+      <div class="question-body">
+        <div class="note"><div class="note-label">Scene context</div>Chalkboard = surface. Closest light in the venue = light source. Your eye = camera.</div>
+
+        <div class="subq">
+          <div class="subq-label">4.1a — Viewing ray generation (1)</div>
+          <div class="answer"><div class="answer-label">Answer</div><div class="answer-text">My eyes — the eye generates the viewing rays toward the chalkboard. ✓</div></div>
+        </div>
+        <div class="subq">
+          <div class="subq-label">4.1b — Viewing ray intersection (1)</div>
+          <div class="answer"><div class="answer-label">Answer</div><div class="answer-text">My eyes looking at the chalkboard — the viewing ray hits and intersects the chalkboard surface. ✓</div></div>
+        </div>
+        <div class="subq">
+          <div class="subq-label">4.1c — Light ray generation (1)</div>
+          <div class="answer"><div class="answer-label">Answer</div><div class="answer-text">The light source (the closest light in the venue) — generates light rays toward the scene. ✓</div></div>
+        </div>
+        <div class="subq">
+          <div class="subq-label">4.1d — Light ray intersection (1)</div>
+          <div class="answer"><div class="answer-label">Answer</div><div class="answer-text">The light making the chalkboard visible — the light ray intersects the chalkboard surface.</div></div>
+          <div class="marks-lost"><div class="marks-lost-label">⚠ Lost mark in 2025</div>The student's answer was unclear. Needed to say: the light ray hits the chalkboard, making it visible/illuminated.</div>
+        </div>
+
+        <hr>
+        <div class="subq">
+          <div class="subq-label">4.2 — Chalkboard not first surface the light ray hits (1)</div>
+          <div class="answer"><div class="answer-label">Answer</div><div class="answer-text">A <strong>shadow</strong> would be cast on the chalkboard. ✓</div></div>
+        </div>
+
+        <hr>
+        <div class="subq">
+          <div class="subq-label">4.3 — Chalkboard not first surface the viewing ray hits (1)</div>
+          <div class="answer"><div class="answer-label">Answer</div><div class="answer-text">The chalkboard will be partially or fully <strong>obscured</strong> by the other surface in front of it. ✓</div></div>
+        </div>
+
+        <hr>
+        <div class="subq">
+          <div class="subq-label">4.4 — Define light source and explain irradiance change (3)</div>
+          <div class="answer"><div class="answer-label">Answer</div><div class="answer-text">
+            The light source is a <strong>point light</strong>.<br><br>
+            If the light moves further away, <strong>irradiance decreases</strong>. The formula E = I/r² shows irradiance is proportional to 1/r² — as distance r increases, E falls off with the inverse square. The light energy spreads over a larger sphere surface area as it travels further. ✓
+          </div></div>
+        </div>
+
+        <hr>
+        <div class="subq">
+          <div class="subq-label">4.5 — Type of reflection from chalkboard (1)</div>
+          <div class="answer"><div class="answer-label">Answer</div><div class="answer-text"><strong>Lambertian (ideal diffuse)</strong> reflection. Chalkboard is a matte surface — reflects equally in all directions. ✓</div></div>
+        </div>
+
+        <hr>
+        <div class="subq">
+          <div class="subq-label">4.6 — Stained glass in front of light source (2 × 2 marks)</div>
+          <div class="subq-text">What would be the perceived colour of the chalkboard for each scenario?</div>
+
+          <div class="subq" style="margin-top:8px;">
+            <div class="subq-label">a) Stained glass same colour as chalkboard</div>
+            <div class="answer"><div class="answer-label">Answer</div><div class="answer-text">The chalkboard would <strong>lose its colour intensity and become harder to see</strong>. The stained glass filters the light to the same colour as the chalkboard, so there is no colour contrast — the chalkboard blends into the coloured illumination.</div></div>
+            <div class="marks-lost"><div class="marks-lost-label">⚠ Lost marks in 2025</div>The student's answer was vague. Key point: when light colour = surface colour, the reflectance formula Lr = (R/π)·I·(n·l)/r² produces the same result but the perceived colour contrast disappears — the chalkboard appears washed out in that colour.</div>
+          </div>
+
+          <div class="subq" style="margin-top:8px;">
+            <div class="subq-label">b) Stained glass different colour from chalkboard</div>
+            <div class="answer"><div class="answer-label">Answer</div><div class="answer-text">The chalkboard's perceived colour would <strong>change</strong> — it would appear tinted by the stained glass colour. The light reaching the chalkboard is now a different colour, which mixes with the surface's reflectance to produce an altered perceived colour.</div></div>
+          </div>
+        </div>
+
+      </div>
+    </div><!-- /Q4 -->
+
+    <!-- Q5 -->
+    <div class="question" id="q2025-5">
+      <div class="question-header" onclick="toggleQuestion(this)">
+        <span class="q-num">Q5</span>
+        <span class="q-title">OpenGL Code Analysis &amp; Transformations</span>
+        <span class="q-marks">16 marks</span>
+        <span class="q-chevron">▾</span>
+      </div>
+      <div class="question-body">
+
+        <div class="subq">
+          <div class="subq-label">5.1 — What is rendered before any transformations? (3 marks)</div>
+          <div class="subq-text">Vertices array has 6 points. Colors: first 3 are (1,0,0,1) — red, fully opaque. Last 3 are (0,1,0, alpha=0.8) — green, 80% opaque. Depth test enabled, blending enabled.</div>
+          <div class="answer">
+            <div class="answer-label">Answer</div>
+            <div class="answer-text">
+              Two triangles are drawn using GL_TRIANGLES (line 73: glDrawArrays(GL_TRIANGLES, 0, 6)):<br><br>
+              • <strong>Front triangle</strong> (vertices 0–2, z=0): fully <strong>red</strong> at 100% opacity.<br>
+              • <strong>Back triangle</strong> (vertices 3–5, z=0.1): <strong>green</strong> at 80% opacity (alpha=0.8).<br><br>
+              Because depth testing is on (GL_LESS), the red triangle (z=0) is in front. Because blending is on, where they overlap the green shows through at 20% behind the red. Background (glClearColor) is blue (0,0,1,0) but effectively invisible since it's fully transparent.
+            </div>
+          </div>
+          <div class="marks-lost"><div class="marks-lost-label">⚠ 2025 answer incomplete</div>The student described it correctly but lost marks for not accounting for the z-values and depth ordering precisely.</div>
+        </div>
+
+        <hr>
+        <div class="subq">
+          <div class="subq-label">5.2a — Purpose of Line 11: glEnable(GL_DEPTH_TEST) (1 mark)</div>
+          <div class="answer"><div class="answer-label">Answer</div><div class="answer-text">Enables depth testing — the GPU compares each incoming fragment's z-value against the stored depth buffer value. Only fragments closer to the camera than what's already drawn get written to the colour buffer. This ensures correct depth ordering. ✓</div></div>
+        </div>
+
+        <div class="subq">
+          <div class="subq-label">5.2b — Purpose of Line 77: glfwSwapBuffers(window) (1 mark)</div>
+          <div class="answer"><div class="answer-label">Answer</div><div class="answer-text">Swaps the front and back buffers — the completed back buffer (which was being drawn to) becomes the front buffer (displayed on screen). Prevents screen tearing. ✓</div></div>
+        </div>
+
+        <hr>
+        <div class="subq">
+          <div class="subq-label">5.3 — If line 73 changed to glDrawArrays(GL_TRIANGLES, 3, 3) (1 mark)</div>
+          <div class="answer"><div class="answer-label">Answer</div><div class="answer-text">Only the <strong>green triangle</strong> would be rendered — starting at vertex index 3, drawing 3 vertices. The red triangle (vertices 0–2) would not be drawn.</div></div>
+          <div class="marks-lost"><div class="marks-lost-label">⚠ Lost mark in 2025</div>Student's answer described starting at 3 drawing 3 more (correct reasoning) but concluded with confusion. The result is simply: one green triangle only.</div>
+        </div>
+
+        <hr>
+        <div class="subq">
+          <div class="subq-label">5.4 — generateMatrix(): 3 transformation steps (4+1+2 marks)</div>
+          <div class="subq-text">Object centre ≈ (−0.1, 0.03, 0.05) based on vertex average.<br>Step 1: Rotate around centre along x-axis by −60°.<br>Step 2: Scale by 2 along z-axis and 0.4 along y-axis.<br>Step 3: Rotate around origin along z-axis by 45°.</div>
+
+          <div class="subq" style="margin-top:8px;">
+            <div class="subq-label">Step 1 (4 marks) — Rotate around object centre along x by −60°</div>
+            <div class="answer"><div class="answer-label">Matrices needed (T⁻¹ · Rx · T)</div>
+            <div class="answer-text">Three matrices: translate to origin, rotate, translate back.</div></div>
+            <div class="matrix">T⁻¹ (move centre to origin):
+[1  0  0  -(-0.1)]   [1  0  0   0.1]
+[0  1  0  -(0.03)] = [0  1  0  -0.03]
+[0  0  1  -(0.05)]   [0  0  1  -0.05]
+[0  0  0    1   ]   [0  0  0    1  ]
+
+Rx(−60°):
+[1    0        0      0]
+[0  cos(-60°) -sin(-60°) 0]
+[0  sin(-60°)  cos(-60°) 0]
+[0    0        0      1]
+=
+[1    0      0    0]
+[0   0.5    √3/2  0]
+[0  -√3/2   0.5  0]
+[0    0      0   1]
+
+T (move back):
+[1  0  0  -0.1]
+[0  1  0   0.03]
+[0  0  1   0.05]
+[0  0  0    1 ]</div>
+          </div>
+
+          <div class="subq" style="margin-top:8px;">
+            <div class="subq-label">Step 2 (1 mark) — Scale z by 2, y by 0.4</div>
+            <div class="matrix">S:
+[1    0    0    0]
+[0   0.4   0    0]
+[0    0    2    0]
+[0    0    0    1]</div>
+          </div>
+
+          <div class="subq" style="margin-top:8px;">
+            <div class="subq-label">Step 3 (2 marks) — Rotate around origin along z by 45°</div>
+            <div class="answer"><div class="answer-label">Note</div><div class="answer-text">No preparation matrices needed — rotation is around the <strong>world origin</strong>, not the object centre.</div></div>
+            <div class="matrix">Rz(45°):
+[cos(45°)  -sin(45°)  0  0]   [√2/2  -√2/2  0  0]
+[sin(45°)   cos(45°)  0  0] = [√2/2   √2/2  0  0]
+[0          0         1  0]   [ 0      0     1  0]
+[0          0         0  1]   [ 0      0     0  1]</div>
+            <div class="marks-lost"><div class="marks-lost-label">⚠ Common mistake</div>Step 3 does NOT need T·R·T⁻¹ because it explicitly says "around the origin." Only steps involving the object's own local axis need preparation matrices.</div>
+          </div>
+
+        </div>
+
+      </div>
+    </div><!-- /Q5 -->
+
+  </div>
+</div><!-- /2025 paper -->
+
+<button id="top-btn" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+
+<script>
+  function toggleToc() { document.getElementById('toc').classList.toggle('open'); }
+  function togglePaper(header) { header.parentElement.classList.toggle('open'); }
+  function toggleQuestion(header) { header.parentElement.classList.toggle('open'); }
+
+  window.addEventListener('scroll', () => {
+    document.getElementById('top-btn').classList.toggle('visible', window.scrollY > 300);
+  });
+
+  document.querySelectorAll('.toc-item').forEach(link => {
+    link.addEventListener('click', e => {
+      e.preventDefault();
+      const target = document.querySelector(link.getAttribute('href'));
+      if (target) {
+        target.classList.add('open');
+        target.scrollIntoView({behavior:'smooth', block:'start'});
+        document.getElementById('toc').classList.remove('open');
+      }
+    });
+  });
+</script>
+</body>
+</html>
