@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ch 3: Raster Images — COS344</title>
+  <link rel="stylesheet" href="style.css?v=3" />
+</head>
+<body>
+
+<nav class="site-nav">
+  <div class="nav-inner">
+  <a href="index.html" class="nav-logo">COS344</a>
+  <ul class="nav-links">
+    <li><a href="index.html">Overview</a></li>
+    <li><a href="ch1-intro.html">Ch 1</a></li>
+    <li><a href="ch3-raster.html" class="active">Ch 3</a></li>
+    <li><a href="ch4-raytracing.html">Ch 4</a></li>
+    <li><a href="ch5-shading.html">Ch 5</a></li>
+    <li><a href="ch7-transforms.html">Ch 7</a></li>
+    <li><a href="ch9-rasterization.html">Ch 9</a></li>
+    <li><a href="ch17-hardware.html">Ch 17</a></li>
+  </ul>
+  <button class="nav-toggle" aria-label="Toggle navigation" aria-expanded="false">
+    <span></span><span></span><span></span>
+  </button>
+  </div>
+</nav>
+
+<div class="page-wrapper">
+  <div class="topic-header">
+    <a href="index.html" class="back-link">← Back to Overview</a>
+    <div class="chapter-label">Chapter 3</div>
+    <h1>Raster Images</h1>
+    <p class="lead">Everything rendered in computer graphics ultimately ends up as a raster image. Understanding pixels, colour representation, and compositing is foundational.</p>
+  </div>
+
+  <div class="connections-bar">
+    <span style="font-size:0.78rem; color:var(--text3); font-family:'Space Mono',monospace; align-self:center;">Connects to →</span>
+    <a href="ch4-raytracing.html" class="conn-pill"><span class="pill-dot" style="background:#34d399;"></span> Ch 4: Ray Tracing (outputs pixels)</a>
+    <a href="ch9-rasterization.html" class="conn-pill"><span class="pill-dot" style="background:#38bdf8;"></span> Ch 9: Rasterization (fills pixels)</a>
+    <a href="ch5-shading.html" class="conn-pill"><span class="pill-dot" style="background:#f59e0b;"></span> Ch 5: Shading (computes pixel colour)</a>
+    <a href="ch17-hardware.html" class="conn-pill"><span class="pill-dot" style="background:#e879f9;"></span> Ch 17: Framebuffer in OpenGL</a>
+  </div>
+
+  <div class="content-layout">
+    <main class="main-content">
+
+      <section>
+        <h2>Images, Pixels and Geometry <span class="section-num">§3.2</span></h2>
+        <p>A <strong>raster image</strong> is a rectangular 2D array of <strong>pixels</strong> (picture elements). This is the output format for every rendering algorithm in COS344.</p>
+
+        <h3>The underlying data structure</h3>
+        <p>A raster image is stored as a <strong>2D array</strong>. For an image of width <em>nx</em> and height <em>ny</em>, the array has dimensions <code>ny × nx</code> (rows × columns), where each cell holds a colour value.</p>
+
+        <div class="diagram-box">
+          <div class="diagram-title">Raster image coordinate system</div>
+          <pre>
+  (0,ny-1)  ┌───┬───┬───┬───┐  (nx-1, ny-1)
+            │   │   │   │   │
+            ├───┼───┼───┼───┤
+            │   │   │   │   │
+            ├───┼───┼───┼───┤
+            │   │   │   │   │
+  (0, 0)   └───┴───┴───┴───┘  (nx-1, 0)
+
+  Each cell = one pixel
+  Origin is typically bottom-left (OpenGL convention)
+  Array index: pixel[row][col]  where  row=0..ny-1, col=0..nx-1
+          </pre>
+        </div>
+
+        <div class="callout info">
+          <span class="callout-icon">💡</span>
+          <div class="callout-body">
+            <strong>Raster devices</strong>
+            <p><strong>Output:</strong> monitors (LCD/OLED), projectors, printers. <strong>Input:</strong> digital cameras, scanners, image sensors. All of these operate on rectangular grids of colour samples.</p>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2>RGB Colour Model <span class="section-num">§3.3</span></h2>
+        <p>Colour in a raster image is represented by mixing different intensities of <strong>Red, Green, and Blue</strong> light. This matches how the human eye perceives colour (three types of cone cells).</p>
+
+        <div class="formula-grid">
+          <div class="formula-card">
+            <div class="f-label">8-bit per channel</div>
+            <div class="f-eq">0 – 255 per channel</div>
+            <div class="f-desc">Most common. Total 16.7 million colours. Storage: 3 bytes/pixel (24-bit colour).</div>
+          </div>
+          <div class="formula-card">
+            <div class="f-label">Floating-point</div>
+            <div class="f-eq">[0.0, 1.0] per channel</div>
+            <div class="f-desc">Used internally for shading calculations. OpenGL uses this range for colour values.</div>
+          </div>
+          <div class="formula-card">
+            <div class="f-label">Bit depth</div>
+            <div class="f-eq">2^n levels per channel</div>
+            <div class="f-desc">8-bit gives 256 levels. Higher bit depths (16-bit, 32-bit) used in HDR imaging.</div>
+          </div>
+        </div>
+
+        <h3>Examples</h3>
+        <div class="code-block">
+          <div class="code-header"><span class="dot" style="background:#f87171;"></span><span class="dot" style="background:#f59e0b;"></span><span class="dot" style="background:#34d399;"></span> RGB Values (float)</div>
+          <pre>Red     = (1.0, 0.0, 0.0)
+Green   = (0.0, 1.0, 0.0)
+Blue    = (0.0, 0.0, 1.0)
+White   = (1.0, 1.0, 1.0)
+Black   = (0.0, 0.0, 0.0)
+Yellow  = (1.0, 1.0, 0.0)   // R + G
+Cyan    = (0.0, 1.0, 1.0)   // G + B
+Magenta = (1.0, 0.0, 1.0)   // R + B</pre>
+        </div>
+      </section>
+
+      <section>
+        <h2>Alpha Compositing <span class="section-num">§3.4</span></h2>
+        <p>The <strong>alpha channel (α)</strong> represents opacity/transparency. It allows compositing — layering one image over another.</p>
+
+        <h3>The compositing formula (Porter-Duff "over" operation)</h3>
+        <div class="math-block">
+C_result = α · C_foreground + (1 − α) · C_background
+
+Where:
+  C  = colour value (per channel: R, G, B)
+  α  = alpha value of the foreground [0.0 = fully transparent, 1.0 = fully opaque]
+        </div>
+
+        <div class="table-wrap">
+        <table class="comparison-table">
+          <thead>
+            <tr><th>α value</th><th>Effect</th><th>Result</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>α = 1.0</code></td><td>Fully opaque</td><td>Foreground completely covers background</td></tr>
+            <tr><td><code>α = 0.0</code></td><td>Fully transparent</td><td>Background shows through completely</td></tr>
+            <tr><td><code>α = 0.5</code></td><td>50% transparent</td><td>50/50 blend of foreground and background</td></tr>
+          </tbody>
+        </table>
+        </div>
+
+        <div class="callout tip">
+          <span class="callout-icon">✅</span>
+          <div class="callout-body">
+            <strong>RGBA images</strong>
+            <p>Images that store alpha have 4 channels: Red, Green, Blue, Alpha. PNG supports RGBA. JPEG does not have an alpha channel.</p>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2>Gamma Correction</h2>
+        <p>Display hardware (monitors) doesn't display intensity linearly — it applies a power function. <strong>Gamma correction</strong> compensates for this non-linearity so that stored pixel values correspond to perceptually linear brightness.</p>
+
+        <div class="math-block">
+Display output ∝ voltage^γ    (typically γ ≈ 2.2)
+
+To correct: store value = linear_intensity^(1/γ)
+When display applies ^γ, the result is the correct linear intensity.
+        </div>
+
+        <div class="callout warn">
+          <span class="callout-icon">⚠️</span>
+          <div class="callout-body">
+            <strong>Shading happens in linear space</strong>
+            <p>All lighting/shading calculations (Ch 5) must be done in <strong>linear</strong> light space, not gamma-encoded space. Convert to gamma-space only at the final output step.</p>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2>Image File Formats</h2>
+        <div class="table-wrap">
+        <table class="comparison-table">
+          <thead>
+            <tr><th>Format</th><th>Compression</th><th>Alpha</th><th>Use case</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>PNG</strong></td><td>Lossless</td><td>Yes (RGBA)</td><td>Web, sprites, transparency</td></tr>
+            <tr><td><strong>JPEG</strong></td><td>Lossy</td><td>No</td><td>Photos, web images</td></tr>
+            <tr><td><strong>BMP</strong></td><td>None (raw)</td><td>Optional</td><td>Simple storage, Windows</td></tr>
+            <tr><td><strong>TGA</strong></td><td>Optional RLE</td><td>Yes</td><td>Game textures (legacy)</td></tr>
+            <tr><td><strong>EXR</strong></td><td>Lossless</td><td>Yes</td><td>HDR, VFX production</td></tr>
+          </tbody>
+        </table>
+        </div>
+      </section>
+
+    </main>
+
+    <aside class="sidebar">
+      <div class="sidebar-card">
+        <h4>On This Page</h4>
+        <ul>
+          <li><a href="#">Images &amp; Pixels</a></li>
+          <li><a href="#">RGB Colour</a></li>
+          <li><a href="#">Alpha Compositing</a></li>
+          <li><a href="#">Gamma Correction</a></li>
+          <li><a href="#">File Formats</a></li>
+        </ul>
+      </div>
+
+      <div class="sidebar-card">
+        <h4>Related Topics</h4>
+        <a href="ch5-shading.html" class="connection-item">
+          <span class="conn-dot" style="background:#f59e0b;"></span>
+          <div>
+            <div class="conn-name">Chapter 5: Shading</div>
+            <div class="conn-desc">Computes the final RGB colour value written into each pixel</div>
+          </div>
+        </a>
+        <a href="ch4-raytracing.html" class="connection-item">
+          <span class="conn-dot" style="background:#34d399;"></span>
+          <div>
+            <div class="conn-name">Chapter 4: Ray Tracing</div>
+            <div class="conn-desc">Produces a raster image by computing per-pixel colour</div>
+          </div>
+        </a>
+        <a href="ch9-rasterization.html" class="connection-item">
+          <span class="conn-dot" style="background:#38bdf8;"></span>
+          <div>
+            <div class="conn-name">Chapter 9: Rasterization</div>
+            <div class="conn-desc">Fills pixel colours using barycentric interpolation</div>
+          </div>
+        </a>
+      </div>
+
+      <div class="sidebar-card">
+        <h4>Key Formulas</h4>
+        <ul>
+          <li><a href="#">Compositing: α·fg + (1-α)·bg</a></li>
+          <li><a href="#">Gamma: v^(1/γ)</a></li>
+          <li><a href="#">Bit depth: 2^n levels</a></li>
+        </ul>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<footer><div class="page-wrapper">COS344 Computer Graphics · Chapter 3</div></footer>
+<script>
+(function(){
+  var btn = document.querySelector(".nav-toggle");
+  var menu = document.querySelector(".nav-links");
+  if(btn && menu){
+    btn.addEventListener("click", function(){
+      var open = menu.classList.toggle("open");
+      btn.classList.toggle("open", open);
+      btn.setAttribute("aria-expanded", open);
+    });
+  }
+})();
+</script>
+</body>
+</html>

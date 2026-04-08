@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ch 4: Ray Tracing — COS344</title>
+  <link rel="stylesheet" href="style.css?v=3" />
+</head>
+<body>
+
+<nav class="site-nav">
+  <div class="nav-inner">
+  <a href="index.html" class="nav-logo">COS344</a>
+  <ul class="nav-links">
+    <li><a href="index.html">Overview</a></li>
+    <li><a href="ch1-intro.html">Ch 1</a></li>
+    <li><a href="ch3-raster.html">Ch 3</a></li>
+    <li><a href="ch4-raytracing.html" class="active">Ch 4</a></li>
+    <li><a href="ch5-shading.html">Ch 5</a></li>
+    <li><a href="ch7-transforms.html">Ch 7</a></li>
+    <li><a href="ch9-rasterization.html">Ch 9</a></li>
+    <li><a href="ch17-hardware.html">Ch 17</a></li>
+  </ul>
+  <button class="nav-toggle" aria-label="Toggle navigation" aria-expanded="false">
+    <span></span><span></span><span></span>
+  </button>
+  </div>
+</nav>
+
+<div class="page-wrapper">
+  <div class="topic-header">
+    <a href="index.html" class="back-link">← Back to Overview</a>
+    <div class="chapter-label">Chapter 4</div>
+    <h1>Ray Tracing</h1>
+    <p class="lead">The image-order rendering approach. For each pixel, cast a ray and find what it hits. Covers the algorithm, projection types, ray generation, and ray-object intersection.</p>
+  </div>
+
+  <div class="connections-bar">
+    <span style="font-size:0.78rem; color:var(--text3); font-family:'Space Mono',monospace; align-self:center;">Connects to →</span>
+    <a href="ch1-intro.html" class="conn-pill"><span class="pill-dot" style="background:#4f8ef7;"></span> Ch 1: Image-order rendering paradigm</a>
+    <a href="ch5-shading.html" class="conn-pill"><span class="pill-dot" style="background:#f59e0b;"></span> Ch 4.5/5: Shading at hit point</a>
+    <a href="ch3-raster.html" class="conn-pill"><span class="pill-dot" style="background:#a78bfa;"></span> Ch 3: Output to pixel array</a>
+  </div>
+
+  <div class="content-layout">
+    <main class="main-content">
+
+      <section>
+        <h2>Rendering Refresher <span class="section-num">§ intro</span></h2>
+        <p><strong>Rendering</strong> is the process of taking a set of 3D objects and producing a 2D array of pixels as output.</p>
+        <p>Ray Tracing is an <strong>image-order</strong> approach: iterate over pixels, and for each pixel determine which objects influence it.</p>
+      </section>
+
+      <section>
+        <h2>Section 4.1 — Basic Ray-Tracing Algorithm</h2>
+
+        <p>A ray tracer determines, for each pixel, which objects are "seen" through that pixel by testing whether a <strong>viewing ray</strong> intersects any objects.</p>
+
+        <div class="callout info">
+          <span class="callout-icon">📐</span>
+          <div class="callout-body">
+            <strong>Viewing ray</strong>
+            <p>A line that emanates from the <em>viewpoint</em>, in the direction the pixel is looking. The ray tracer finds the <strong>closest</strong> object the ray intersects (unless the object is translucent).</p>
+          </div>
+        </div>
+
+        <h3>Three components of a ray tracer</h3>
+        <ol>
+          <li><strong>Ray generation</strong> — compute origin and direction of each pixel's viewing ray based on camera geometry.</li>
+          <li><strong>Ray intersection</strong> — find the <em>closest</em> object that intersects the viewing ray.</li>
+          <li><strong>Shading</strong> — compute pixel colour from the intersection result (normal, light, hit point).</li>
+        </ol>
+
+        <div class="algo-block">
+          <div class="algo-title">Algorithm 1 — Basic Ray Tracing</div>
+          <div><span class="kw">for each</span> pixel (i, j) <span class="kw">do</span></div>
+          <div class="indent1">ray = <span class="fn">computeViewingRay</span>(i, j)</div>
+          <div class="indent1">hit = <span class="fn">findFirstIntersection</span>(ray, objects)</div>
+          <div class="indent1"><span class="kw">if</span> hit <span class="kw">then</span></div>
+          <div class="indent2">n = <span class="fn">computeSurfaceNormal</span>(hit)</div>
+          <div class="indent2">color[i][j] = <span class="fn">shade</span>(n, light, hit.point)</div>
+          <div class="indent1"><span class="kw">else</span></div>
+          <div class="indent2">color[i][j] = backgroundColor</div>
+          <div class="indent1"><span class="kw">end if</span></div>
+          <div><span class="kw">end for</span></div>
+        </div>
+      </section>
+
+      <section>
+        <h2>Section 4.2 — Perspective</h2>
+        <p>We need to project 3D scenes onto a 2D image plane. Multiple approaches exist:</p>
+
+        <div class="table-wrap">
+        <table class="comparison-table">
+          <thead>
+            <tr><th>Type</th><th>How it works</th><th>Property</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong class="hl-blue">Parallel (Orthographic)</strong></td>
+              <td>3D points projected parallel to a projection direction onto the image plane.</td>
+              <td>No convergence — parallel lines stay parallel. No depth foreshortening.</td>
+            </tr>
+            <tr>
+              <td><strong class="hl-green">Perspective</strong></td>
+              <td>All rays converge at the viewpoint (eye position).</td>
+              <td>Objects further away appear smaller. Mimics human eye / camera.</td>
+            </tr>
+          </tbody>
+        </table>
+        </div>
+
+        <div class="callout info">
+          <span class="callout-icon">💡</span>
+          <div class="callout-body">
+            <strong>Linear Perspective</strong>
+            <p>The most common approach in computer graphics. 3D objects are projected onto an image plane so that straight lines in the scene become straight lines in the image.</p>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2>Section 4.3 — Computing Viewing Rays</h2>
+        <p>A ray is defined as: <code>p(t) = e + t·d</code>, where <strong>e</strong> is the ray origin (eye/viewpoint) and <strong>d</strong> is the ray direction.</p>
+
+        <p>To set up the camera coordinate frame, compute orthonormal basis vectors <strong>u</strong>, <strong>v</strong>, <strong>w</strong>:</p>
+        <div class="math-block">
+w = −normalize(g)          // g = gaze direction; w points AWAY from scene
+u = normalize(t × w)       // t = "up" vector
+v = w × u
+
+Where e = eye/camera position
+        </div>
+
+        <h3>4.3.1 — Orthographic (Parallel) Viewing Rays</h3>
+        <p>All rays have the <strong>same direction</strong> but different origins (one per pixel).</p>
+        <div class="math-block">
+For pixel (i, j) mapped to image coords (u, v):
+  Ray origin    = e + u·u_vec + v·v_vec
+  Ray direction = −w
+        </div>
+
+        <div class="algo-block">
+          <div class="algo-title">Algorithm 2 — Orthographic Ray Generation</div>
+          <div><span class="kw">for each</span> pixel (i, j) <span class="kw">do</span></div>
+          <div class="indent1"><span class="cm">// compute u, v in image plane</span></div>
+          <div class="indent1">u = l + (r − l)(i + 0.5) / nx</div>
+          <div class="indent1">v = b + (t − b)(j + 0.5) / ny</div>
+          <div class="indent1">ray.origin = e + u·u_hat + v·v_hat</div>
+          <div class="indent1">ray.direction = −w_hat</div>
+          <div><span class="kw">end for</span></div>
+        </div>
+
+        <h3>4.3.2 — Perspective Viewing Rays</h3>
+        <p>All rays share the same <strong>origin</strong> (the viewpoint), but have different directions.</p>
+        <div class="math-block">
+  Ray origin    = e
+  Ray direction = −d·w + u·u_vec + v·v_vec
+
+  Where d = plane distance (focal length)
+        </div>
+
+        <div class="algo-block">
+          <div class="algo-title">Algorithm 3 — Perspective Ray Generation</div>
+          <div><span class="kw">for each</span> pixel (i, j) <span class="kw">do</span></div>
+          <div class="indent1">u = l + (r − l)(i + 0.5) / nx</div>
+          <div class="indent1">v = b + (t − b)(j + 0.5) / ny</div>
+          <div class="indent1">ray.origin = e</div>
+          <div class="indent1">ray.direction = −d·w_hat + u·u_hat + v·v_hat</div>
+          <div><span class="kw">end for</span></div>
+        </div>
+
+        <div class="callout exam">
+          <span class="callout-icon">🎯</span>
+          <div class="callout-body">
+            <strong>Know the difference for the exam</strong>
+            <p>Orthographic: same direction, different origins. Perspective: same origin (e), different directions. The focal length <strong>d</strong> appears only in perspective rays.</p>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2>Section 4.4 — Ray-Object Intersection</h2>
+        <p>Given a ray <code>p(t) = e + t·d</code>, find the value of <strong>t</strong> at which it hits an object. The smallest positive <strong>t</strong> gives the closest hit.</p>
+
+        <h3>4.4.1 — Ray-Sphere Intersection</h3>
+        <p>For a sphere centred at <strong>c</strong> with radius <strong>R</strong>, substitute the ray equation into the sphere equation:</p>
+
+        <div class="math-block">
+Sphere surface: |p − c|² = R²
+Substitute p = e + t·d:
+
+(d·d)t² + 2d·(e−c)t + (e−c)·(e−c) − R² = 0
+
+This is a quadratic in t:  at² + bt + c = 0
+  a = d·d
+  b = 2d·(e−c)
+  c = (e−c)·(e−c) − R²
+
+discriminant = b² − 4ac
+
+If discriminant &lt; 0: no intersection (ray misses sphere)
+If discriminant = 0: one intersection (tangent)
+If discriminant &gt; 0: two intersections (pick smallest positive t)
+        </div>
+
+        <h3>4.4.2 — Ray-Triangle Intersection</h3>
+        <p>For a triangle with vertices <strong>a</strong>, <strong>b</strong>, <strong>c</strong>, express a point inside the triangle using barycentric coordinates and solve:</p>
+
+        <div class="math-block">
+e + t·d = a + β(b−a) + γ(c−a)
+
+Rearranged into a 3×3 linear system in unknowns t, β, γ.
+Solve using Cramer's Rule.
+
+Hit is INSIDE the triangle if:
+  β &gt; 0,  γ &gt; 0,  and  β + γ &lt; 1
+        </div>
+
+        <div class="algo-block">
+          <div class="algo-title">Algorithm 4 — Early-Termination Ray-Triangle Intersection</div>
+          <div><span class="kw">function</span> <span class="fn">intersectsTriangle</span>(ray, a, b, c, t0, t1)</div>
+          <div class="indent1">Compute t</div>
+          <div class="indent1"><span class="kw">if</span> t &lt; t0 <span class="kw">or</span> t &gt; t1 <span class="kw">then return</span> false</div>
+          <div class="indent1">Compute γ</div>
+          <div class="indent1"><span class="kw">if</span> γ &lt; 0 <span class="kw">or</span> γ &gt; 1 <span class="kw">then return</span> false</div>
+          <div class="indent1">Compute β</div>
+          <div class="indent1"><span class="kw">if</span> β &lt; 0 <span class="kw">or</span> β + γ &gt; 1 <span class="kw">then return</span> false</div>
+          <div class="indent1"><span class="kw">return</span> true</div>
+          <div><span class="kw">end function</span></div>
+        </div>
+
+        <div class="callout tip">
+          <span class="callout-icon">✅</span>
+          <div class="callout-body">
+            <strong>Barycentric coordinates also used in Ch 9</strong>
+            <p>The same (β, γ) coordinates used here for intersection appear in <a href="ch9-rasterization.html" style="color:var(--accent3);">Chapter 9 rasterization</a> for determining whether a pixel centre is inside a triangle and interpolating colours.</p>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2>Practical Example: Ray Tracing a Sphere</h2>
+
+        <div class="code-block">
+          <div class="code-header"><span class="dot" style="background:#f87171;"></span><span class="dot" style="background:#f59e0b;"></span><span class="dot" style="background:#34d399;"></span> C++ — Ray-Sphere Intersection</div>
+          <pre>struct Ray { vec3 origin, direction; };
+struct Sphere { vec3 center; float radius; };
+
+// Returns t of intersection, or -1 if miss
+float raySphereIntersect(Ray r, Sphere s) {
+    vec3 oc = r.origin - s.center;
+    float a = dot(r.direction, r.direction);
+    float b = 2.0f * dot(oc, r.direction);
+    float c = dot(oc, oc) - s.radius * s.radius;
+    float discriminant = b*b - 4*a*c;
+
+    if (discriminant &lt; 0) return -1.0f;  // miss
+
+    // Return closest (smallest positive) t
+    return (-b - sqrt(discriminant)) / (2.0f * a);
+}</pre>
+        </div>
+      </section>
+
+    </main>
+
+    <aside class="sidebar">
+      <div class="sidebar-card">
+        <h4>On This Page</h4>
+        <ul>
+          <li><a href="#">Basic Algorithm</a></li>
+          <li><a href="#">Perspective Types</a></li>
+          <li><a href="#">Viewing Ray Equations</a></li>
+          <li><a href="#">Sphere Intersection</a></li>
+          <li><a href="#">Triangle Intersection</a></li>
+        </ul>
+      </div>
+
+      <div class="sidebar-card">
+        <h4>Related Topics</h4>
+        <a href="ch5-shading.html" class="connection-item">
+          <span class="conn-dot" style="background:#f59e0b;"></span>
+          <div>
+            <div class="conn-name">Chapter 4.5 / 5: Shading</div>
+            <div class="conn-desc">Applied after finding the hit point — computes actual colour</div>
+          </div>
+        </a>
+        <a href="ch9-rasterization.html" class="connection-item">
+          <span class="conn-dot" style="background:#38bdf8;"></span>
+          <div>
+            <div class="conn-name">Chapter 9: Rasterization</div>
+            <div class="conn-desc">Alternative rendering approach — barycentric coords shared</div>
+          </div>
+        </a>
+        <a href="ch1-intro.html" class="connection-item">
+          <span class="conn-dot" style="background:#4f8ef7;"></span>
+          <div>
+            <div class="conn-name">Chapter 1: Paradigms</div>
+            <div class="conn-desc">Ray tracing is the image-order paradigm from Ch 1</div>
+          </div>
+        </a>
+      </div>
+
+      <div class="sidebar-card">
+        <h4>Key Equations</h4>
+        <ul>
+          <li><a href="#">Ray: p(t) = e + t·d</a></li>
+          <li><a href="#">Sphere: quadratic in t</a></li>
+          <li><a href="#">Triangle: Cramer's Rule</a></li>
+          <li><a href="#">Inside test: β&gt;0, γ&gt;0, β+γ&lt;1</a></li>
+        </ul>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<footer><div class="page-wrapper">COS344 Computer Graphics · Chapter 4</div></footer>
+<script>
+(function(){
+  var btn = document.querySelector(".nav-toggle");
+  var menu = document.querySelector(".nav-links");
+  if(btn && menu){
+    btn.addEventListener("click", function(){
+      var open = menu.classList.toggle("open");
+      btn.classList.toggle("open", open);
+      btn.setAttribute("aria-expanded", open);
+    });
+  }
+})();
+</script>
+</body>
+</html>

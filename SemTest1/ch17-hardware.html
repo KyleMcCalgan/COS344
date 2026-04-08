@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ch 17: Graphics Hardware — COS344</title>
+  <link rel="stylesheet" href="style.css?v=3" />
+</head>
+<body>
+
+<nav class="site-nav">
+  <div class="nav-inner">
+  <a href="index.html" class="nav-logo">COS344</a>
+  <ul class="nav-links">
+    <li><a href="index.html">Overview</a></li>
+    <li><a href="ch1-intro.html">Ch 1</a></li>
+    <li><a href="ch3-raster.html">Ch 3</a></li>
+    <li><a href="ch4-raytracing.html">Ch 4</a></li>
+    <li><a href="ch5-shading.html">Ch 5</a></li>
+    <li><a href="ch7-transforms.html">Ch 7</a></li>
+    <li><a href="ch9-rasterization.html">Ch 9</a></li>
+    <li><a href="ch17-hardware.html" class="active">Ch 17</a></li>
+  </ul>
+  <button class="nav-toggle" aria-label="Toggle navigation" aria-expanded="false">
+    <span></span><span></span><span></span>
+  </button>
+  </div>
+</nav>
+
+<div class="page-wrapper">
+  <div class="topic-header">
+    <a href="index.html" class="back-link">← Back to Overview</a>
+    <div class="chapter-label">Chapter 17</div>
+    <h1>Graphics Hardware &amp; OpenGL</h1>
+    <p class="lead">The practical chapter — how the GPU works, how OpenGL exposes it, and how to write actual OpenGL programs with VBOs, VAOs, and GLSL shaders.</p>
+  </div>
+
+  <div class="connections-bar">
+    <span style="font-size:0.78rem; color:var(--text3); font-family:'Space Mono',monospace; align-self:center;">Connects to →</span>
+    <a href="ch9-rasterization.html" class="conn-pill"><span class="pill-dot" style="background:#38bdf8;"></span> Ch 9: Pipeline this hardware implements</a>
+    <a href="ch7-transforms.html" class="conn-pill"><span class="pill-dot" style="background:#f87171;"></span> Ch 7: Matrices in vertex shaders</a>
+    <a href="ch5-shading.html" class="conn-pill"><span class="pill-dot" style="background:#f59e0b;"></span> Ch 5: Shading in fragment shaders</a>
+  </div>
+
+  <div class="content-layout">
+    <main class="main-content">
+
+      <section>
+        <h2>Section 17.2 — What is Graphics Hardware?</h2>
+        <p>A GPU (Graphics Processing Unit) is a dedicated chip optimised for processing 3D geometry and rendering images. It consists of:</p>
+        <ul>
+          <li><strong>Thousands of small computing cores</strong> — unlike a CPU's few large cores</li>
+          <li><strong>High parallelism</strong> — thousands of threads running simultaneously</li>
+          <li><strong>Dedicated memory (VRAM)</strong> — fast access to vertex/texture data</li>
+        </ul>
+        <p>GPUs are also used outside graphics: AI/ML training, scientific simulation, cryptocurrency — because their massively parallel architecture suits any workload that can be decomposed into many identical small operations.</p>
+      </section>
+
+      <section>
+        <h2>Section 17.3 — Heterogeneous Multiprocessing</h2>
+        <p>A modern system has two distinct processors working together:</p>
+        <div class="table-wrap">
+        <table class="comparison-table">
+          <thead>
+            <tr><th></th><th>CPU</th><th>GPU</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Cores</strong></td>
+              <td>Few (4–32), large and complex</td>
+              <td>Thousands, small and simple</td>
+            </tr>
+            <tr>
+              <td><strong>Best at</strong></td>
+              <td>Sequential logic, branching, OS tasks</td>
+              <td>Massively parallel identical operations</td>
+            </tr>
+            <tr>
+              <td><strong>Role</strong></td>
+              <td>Main program logic, setup, draw calls</td>
+              <td>Vertex transforms, fragment shading</td>
+            </tr>
+          </tbody>
+        </table>
+        </div>
+        <p>The CPU sends geometry data and commands to the GPU over a bus (PCIe). The GPU renders to a framebuffer which is then displayed on screen.</p>
+      </section>
+
+      <section>
+        <h2>Section 17.4 — Buffers, State, and Shaders</h2>
+        <p>The OpenGL programming model is built around three concepts:</p>
+        <ul>
+          <li><strong>Buffers</strong> — blocks of GPU memory holding vertex data, indices, etc.</li>
+          <li><strong>State</strong> — settings that control how OpenGL renders (depth test, blend mode, active shader, etc.)</li>
+          <li><strong>Shaders</strong> — small programs that run on the GPU at different stages of the pipeline</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>Section 17.5 — OpenGL State Machine</h2>
+        <p>OpenGL is a <strong>state machine</strong>. You set state, then draw. The draw call uses whatever state is currently active.</p>
+
+        <h3>Enabling capabilities</h3>
+        <div class="code-block">
+          <div class="code-header"><span class="dot" style="background:#f87171;"></span><span class="dot" style="background:#f59e0b;"></span><span class="dot" style="background:#34d399;"></span> OpenGL State Functions</div>
+          <pre>// Enable depth testing (z-buffer — see Ch 9)
+glEnable(GL_DEPTH_TEST);
+glDepthFunc(GL_LESS);  // draw if closer (default)
+
+// Other common depth functions:
+// GL_NEVER   GL_LESS    GL_EQUAL   GL_LEQUAL
+// GL_GREATER GL_NOTEQUAL GL_GEQUAL GL_ALWAYS
+
+// Disable depth testing
+glDisable(GL_DEPTH_TEST);</pre>
+        </div>
+
+        <h3>The render loop</h3>
+        <div class="code-block">
+          <div class="code-header"><span class="dot" style="background:#f87171;"></span><span class="dot" style="background:#f59e0b;"></span><span class="dot" style="background:#34d399;"></span> Main Render Loop (GLFW)</div>
+          <pre>do {
+    // Clear colour and depth buffers each frame
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    // ... draw your scene here ...
+
+    glfwSwapBuffers(window);  // swap front/back buffers
+    glfwPollEvents();         // handle keyboard/mouse
+
+} while (glfwGetKey(window, GLFW_KEY_SPACE) != GLFW_PRESS
+      && glfwWindowShouldClose(window) == 0);</pre>
+        </div>
+
+        <div class="callout info">
+          <span class="callout-icon">💡</span>
+          <div class="callout-body">
+            <strong>Double buffering</strong>
+            <p>OpenGL renders into a "back buffer" while the "front buffer" is displayed. <code>glfwSwapBuffers</code> swaps them, preventing screen tearing.</p>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2>Section 17.7 — Geometry &amp; Primitives</h2>
+        <p>Vertex attributes (position, colour, normal, etc.) are stored in arrays before being sent to the GPU. The GPU's basic geometric primitives are:</p>
+
+        <div class="table-wrap">
+        <table class="comparison-table">
+          <thead>
+            <tr><th>Primitive</th><th>Description</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Points</strong></td><td>Each vertex rendered as a point.</td></tr>
+            <tr><td><strong>Lines</strong></td><td>Used for wireframes.</td></tr>
+            <tr><td><strong>Triangles</strong></td><td>Used for filled polygons. The fundamental primitive.</td></tr>
+          </tbody>
+        </table>
+        </div>
+
+        <h3>Triangle primitive modes</h3>
+        <div class="table-wrap">
+        <table class="comparison-table">
+          <thead>
+            <tr><th>Mode</th><th>Vertex grouping</th><th>Example (a,b,c,d,e,f)</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>GL_TRIANGLES</code></td><td>Every 3 vertices = one triangle</td><td>Δ(a,b,c), Δ(d,e,f)</td></tr>
+            <tr><td><code>GL_TRIANGLE_STRIP</code></td><td>Each new vertex + previous 2 = new triangle</td><td>Δ(a,b,c), Δ(b,c,d), Δ(c,d,e)</td></tr>
+            <tr><td><code>GL_TRIANGLE_FAN</code></td><td>Each new vertex + first vertex + previous = new triangle</td><td>Δ(a,b,c), Δ(a,c,d), Δ(a,d,e)</td></tr>
+          </tbody>
+        </table>
+        </div>
+
+        <div class="callout exam">
+          <span class="callout-icon">🎯</span>
+          <div class="callout-body">
+            <strong>Triangle winding order</strong>
+            <p>The order of vertices matters! Triangle vertices must be ordered so that the <strong>outward-facing normal</strong> faces outward (typically counter-clockwise when viewed from outside). This is used for back-face culling.</p>
+          </div>
+        </div>
+
+        <h3>Line primitive modes</h3>
+        <div class="table-wrap">
+        <table class="comparison-table">
+          <thead>
+            <tr><th>Mode</th><th>Description</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>GL_LINES</code></td><td>Pairs of vertices: (a,b), (c,d), ...</td></tr>
+            <tr><td><code>GL_LINE_STRIP</code></td><td>Connected path: a→b→c→d</td></tr>
+            <tr><td><code>GL_LINE_LOOP</code></td><td>Closed path: a→b→c→d→a</td></tr>
+          </tbody>
+        </table>
+        </div>
+      </section>
+
+      <section>
+        <h2>Section 17.8 — Shaders (GLSL)</h2>
+        <p>Modern OpenGL (3.3+) <strong>requires</strong> shaders. No rendering works without at least:</p>
+        <ul>
+          <li>One <strong>vertex shader</strong> — processes each incoming vertex</li>
+          <li>One <strong>fragment shader</strong> — processes each rasterized fragment (pixel)</li>
+        </ul>
+
+        <h3>17.8.1 — Vertex Shader</h3>
+        <div class="code-block">
+          <div class="code-header"><span class="dot" style="background:#f87171;"></span><span class="dot" style="background:#f59e0b;"></span><span class="dot" style="background:#34d399;"></span> GLSL — Minimal Vertex Shader</div>
+          <pre>#version 330 core
+layout(location = 0) in vec3 in_Position;
+
+void main(void) {
+    gl_Position = vec4(in_Position, 1.0);
+}</pre>
+        </div>
+
+        <div class="code-block">
+          <div class="code-header"><span class="dot" style="background:#f87171;"></span><span class="dot" style="background:#f59e0b;"></span><span class="dot" style="background:#34d399;"></span> GLSL — Vertex Shader with MVP Transform (Ch 7)</div>
+          <pre>#version 330 core
+layout(location = 0) in vec3 in_Position;
+layout(location = 1) in vec3 in_Normal;
+
+uniform mat4 model;
+uniform mat4 view;
+uniform mat4 projection;
+uniform mat3 normalMatrix;   // = transpose(inverse(model))
+
+out vec3 fragPos;
+out vec3 fragNormal;
+
+void main(void) {
+    vec4 worldPos = model * vec4(in_Position, 1.0);
+    fragPos = vec3(worldPos);
+    fragNormal = normalize(normalMatrix * in_Normal);
+    gl_Position = projection * view * worldPos;
+}</pre>
+        </div>
+
+        <h3>17.8.2 — Fragment Shader</h3>
+        <div class="code-block">
+          <div class="code-header"><span class="dot" style="background:#f87171;"></span><span class="dot" style="background:#f59e0b;"></span><span class="dot" style="background:#34d399;"></span> GLSL — Fragment Shader with Blinn-Phong (Ch 5)</div>
+          <pre>#version 330 core
+in vec3 fragPos;
+in vec3 fragNormal;
+
+uniform vec3 lightPos;
+uniform vec3 viewPos;
+uniform vec3 lightColor;
+uniform vec3 objectColor;
+
+out vec4 FragColor;
+
+void main() {
+    vec3 n = normalize(fragNormal);
+    vec3 l = normalize(lightPos - fragPos);
+    vec3 v = normalize(viewPos - fragPos);
+    vec3 h = normalize(l + v);  // half vector (Blinn-Phong)
+
+    // Ambient
+    float ka = 0.1;
+    vec3 ambient = ka * lightColor;
+
+    // Diffuse (Lambertian)
+    float diff = max(dot(n, l), 0.0);
+    vec3 diffuse = diff * lightColor;
+
+    // Specular (Blinn-Phong)
+    float ks = 0.5;
+    float p = 32.0;  // shininess
+    float spec = pow(max(dot(n, h), 0.0), p);
+    vec3 specular = ks * spec * lightColor;
+
+    vec3 result = (ambient + diffuse + specular) * objectColor;
+    FragColor = vec4(result, 1.0);
+}</pre>
+        </div>
+
+        <h3>GLSL Data Types</h3>
+        <div class="table-wrap">
+        <table class="comparison-table">
+          <thead>
+            <tr><th>Type</th><th>Description</th><th>Access</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>vec2</code>, <code>vec3</code>, <code>vec4</code></td><td>Float vectors</td><td><code>v.x, v.y, v.z, v.w</code> or <code>v.r, v.g, v.b, v.a</code></td></tr>
+            <tr><td><code>mat2</code>, <code>mat3</code>, <code>mat4</code></td><td>Float matrices</td><td>Column-major access</td></tr>
+            <tr><td><code>int</code>, <code>float</code></td><td>Scalars</td><td>Direct</td></tr>
+            <tr><td><code>sampler2D</code></td><td>Texture handle</td><td><code>texture(sampler, uv)</code></td></tr>
+          </tbody>
+        </table>
+        </div>
+
+        <h3>Swizzling</h3>
+        <div class="code-block">
+          <div class="code-header"><span class="dot" style="background:#f87171;"></span><span class="dot" style="background:#f59e0b;"></span><span class="dot" style="background:#34d399;"></span> GLSL — Swizzling</div>
+          <pre>vec3 position = vec3(1.0, 2.0, 3.0);
+vec2 xy = position.xy;     // (1.0, 2.0)
+vec3 zyx = position.zyx;   // (3.0, 2.0, 1.0)
+float z = position.z;      // 3.0
+
+// Color swizzling (same indices, different names)
+vec4 color = vec4(1.0, 0.5, 0.2, 1.0);
+vec3 rgb = color.rgb;  // equivalent to color.xyz</pre>
+        </div>
+      </section>
+
+      <section>
+        <h2>Section 17.9 — Vertex Buffer Objects (VBO)</h2>
+        <p>A VBO is a buffer in GPU memory that holds vertex data (positions, colours, normals, etc.).</p>
+
+        <div class="code-block">
+          <div class="code-header"><span class="dot" style="background:#f87171;"></span><span class="dot" style="background:#f59e0b;"></span><span class="dot" style="background:#34d399;"></span> C++ — Creating and Filling a VBO</div>
+          <pre>float vertices[] = {
+    // x      y      z
+    -0.5f, -0.5f, 0.0f,   // vertex 0
+     0.5f, -0.5f, 0.0f,   // vertex 1
+     0.0f,  0.5f, 0.0f    // vertex 2
+};
+
+GLuint VBO;
+glGenBuffers(1, &VBO);           // create 1 buffer, get its ID
+glBindBuffer(GL_ARRAY_BUFFER, VBO);   // make it the active buffer
+glBufferData(GL_ARRAY_BUFFER,         // upload data to GPU
+    sizeof(vertices), vertices, GL_STATIC_DRAW);</pre>
+        </div>
+      </section>
+
+      <section>
+        <h2>Section 17.10 — Vertex Array Objects (VAO)</h2>
+        <p>A VAO stores the <strong>layout description</strong> of vertex data — which attribute is at which location, what type, stride, offset. It remembers the VBO bindings and attribute pointers, so you only need to bind the VAO to use everything.</p>
+
+        <div class="code-block">
+          <div class="code-header"><span class="dot" style="background:#f87171;"></span><span class="dot" style="background:#f59e0b;"></span><span class="dot" style="background:#34d399;"></span> C++ — VAO Setup</div>
+          <pre>GLuint VAO, VBO;
+glGenVertexArrays(1, &VAO);
+glGenBuffers(1, &VBO);
+
+glBindVertexArray(VAO);           // start recording
+
+glBindBuffer(GL_ARRAY_BUFFER, VBO);
+glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+// Tell OpenGL: attribute 0 = vec3 (position), tightly packed
+glVertexAttribPointer(
+    0,              // attribute location (matches layout(location=0))
+    3,              // size: 3 floats (vec3)
+    GL_FLOAT,       // type
+    GL_FALSE,       // don't normalise
+    3 * sizeof(float),  // stride (bytes between consecutive vertices)
+    (void*)0        // offset of this attribute within vertex struct
+);
+glEnableVertexAttribArray(0);
+
+glBindVertexArray(0);             // stop recording
+
+// --- At render time ---
+glBindVertexArray(VAO);
+glDrawArrays(GL_TRIANGLES, 0, 3);  // draw 3 vertices as a triangle</pre>
+        </div>
+
+        <div class="diagram-box">
+          <div class="diagram-title">VBO / VAO relationship</div>
+          <pre>
+  CPU Memory:          GPU Memory (VBO):           VAO:
+  ┌──────────┐        ┌──────────────────┐        ┌─────────────────────────┐
+  │ vertices │──────► │ [x,y,z, x,y,z,…]│◄───────│ attr 0: VBO, float, 3   │
+  │ (float[])│        │                  │        │ attr 1: VBO, float, 3   │
+  └──────────┘        └──────────────────┘        │ (stores layout + binding)│
+                                                  └─────────────────────────┘
+  glBufferData uploads     VBO stores raw data     VAO remembers how to read it
+          </pre>
+        </div>
+
+        <div class="callout exam">
+          <span class="callout-icon">🎯</span>
+          <div class="callout-body">
+            <strong>VAO vs VBO — know the difference</strong>
+            <p>VBO = the raw data buffer on the GPU. VAO = the descriptor/recipe for reading that data. You bind the VAO to draw; the VAO tells OpenGL which VBO to read and how the data is laid out.</p>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <aside class="sidebar">
+      <div class="sidebar-card">
+        <h4>On This Page</h4>
+        <ul>
+          <li><a href="#">GPU Architecture</a></li>
+          <li><a href="#">State Machine</a></li>
+          <li><a href="#">Primitives</a></li>
+          <li><a href="#">GLSL Shaders</a></li>
+          <li><a href="#">VBO</a></li>
+          <li><a href="#">VAO</a></li>
+        </ul>
+      </div>
+
+      <div class="sidebar-card">
+        <h4>Related Topics</h4>
+        <a href="ch9-rasterization.html" class="connection-item">
+          <span class="conn-dot" style="background:#38bdf8;"></span>
+          <div>
+            <div class="conn-name">Chapter 9: Rasterization</div>
+            <div class="conn-desc">The conceptual pipeline that OpenGL implements in hardware</div>
+          </div>
+        </a>
+        <a href="ch5-shading.html" class="connection-item">
+          <span class="conn-dot" style="background:#f59e0b;"></span>
+          <div>
+            <div class="conn-name">Chapter 5: Shading</div>
+            <div class="conn-desc">Lambertian/Blinn-Phong implemented in fragment shaders</div>
+          </div>
+        </a>
+        <a href="ch7-transforms.html" class="connection-item">
+          <span class="conn-dot" style="background:#f87171;"></span>
+          <div>
+            <div class="conn-name">Chapter 7: Transforms</div>
+            <div class="conn-desc">mat4 MVP matrices passed as uniforms to vertex shaders</div>
+          </div>
+        </a>
+      </div>
+
+      <div class="sidebar-card">
+        <h4>Key API Calls</h4>
+        <ul>
+          <li><a href="#">glEnable / glDisable</a></li>
+          <li><a href="#">glGenBuffers / glBindBuffer</a></li>
+          <li><a href="#">glGenVertexArrays / glBindVertexArray</a></li>
+          <li><a href="#">glVertexAttribPointer</a></li>
+          <li><a href="#">glDrawArrays</a></li>
+          <li><a href="#">glClear</a></li>
+        </ul>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<footer><div class="page-wrapper">COS344 Computer Graphics · Chapter 17</div></footer>
+<script>
+(function(){
+  var btn = document.querySelector(".nav-toggle");
+  var menu = document.querySelector(".nav-links");
+  if(btn && menu){
+    btn.addEventListener("click", function(){
+      var open = menu.classList.toggle("open");
+      btn.classList.toggle("open", open);
+      btn.setAttribute("aria-expanded", open);
+    });
+  }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>COS344 — Computer Graphics Study Guide</title>
+  <link rel="stylesheet" href="style.css?v=3" />
+</head>
+<body>
+
+<nav class="site-nav">
+  <div class="nav-inner">
+  <a href="index.html" class="nav-logo">COS344</a>
+  <ul class="nav-links">
+    <li><a href="index.html" class="active">Overview</a></li>
+    <li><a href="ch1-intro.html">Ch 1</a></li>
+    <li><a href="ch3-raster.html">Ch 3</a></li>
+    <li><a href="ch4-raytracing.html">Ch 4</a></li>
+    <li><a href="ch5-shading.html">Ch 5</a></li>
+    <li><a href="ch7-transforms.html">Ch 7</a></li>
+    <li><a href="ch9-rasterization.html">Ch 9</a></li>
+    <li><a href="ch17-hardware.html">Ch 17</a></li>
+  </ul>
+  <button class="nav-toggle" aria-label="Toggle navigation" aria-expanded="false">
+    <span></span><span></span><span></span>
+  </button>
+  </div>
+</nav>
+
+<div class="page-wrapper">
+
+  <header class="hero">
+    <div class="badge">Semester Test 1 — 28 March 2026</div>
+    <h1>COS344 <span>Computer Graphics</span><br>Study Guide</h1>
+    <p>A structured revision site covering all chapters in scope for Semester Test 1. Theory-focused with practical examples and cross-linked concepts.</p>
+  </header>
+
+  <div class="test-banner">
+    <div class="info-item">
+      <span class="info-label">Date</span>
+      <span class="info-value">28 March 2026</span>
+    </div>
+    <div class="info-item">
+      <span class="info-label">Time</span>
+      <span class="info-value">12h30 — 14h00</span>
+    </div>
+    <div class="info-item">
+      <span class="info-label">Duration</span>
+      <span class="info-value">1.5 hours</span>
+    </div>
+    <div class="info-item">
+      <span class="info-label">Venue</span>
+      <span class="info-value">IT 2-26</span>
+    </div>
+    <div class="info-item">
+      <span class="info-label">Format</span>
+      <span class="info-value">Open book (non-electronic)</span>
+    </div>
+    <div class="info-item">
+      <span class="info-label">Focus</span>
+      <span class="info-value">Theory &amp; application reasoning</span>
+    </div>
+  </div>
+
+  <section>
+    <h2 style="font-size:1.1rem; color:var(--text3); font-family:'Space Mono',monospace; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; margin-bottom:1.25rem;">
+      In Scope
+    </h2>
+    <div class="topic-grid">
+
+      <a href="ch1-intro.html" class="topic-card" style="--card-accent: #4f8ef7;">
+        <span class="card-chapter">Chapter 1</span>
+        <h3>Introduction to Computer Graphics</h3>
+        <p>Applications of CG, rendering paradigms (object-order vs image-order), graphics APIs, and the basic graphics pipeline concept.</p>
+        <div class="card-tags">
+          <span class="tag">rendering</span>
+          <span class="tag">pipeline</span>
+          <span class="tag">OpenGL</span>
+        </div>
+      </a>
+
+      <a href="ch3-raster.html" class="topic-card" style="--card-accent: #a78bfa;">
+        <span class="card-chapter">Chapter 3</span>
+        <h3>Raster Images</h3>
+        <p>Pixels, image geometry, RGB color model, bit depth, gamma correction, alpha compositing, and image file formats.</p>
+        <div class="card-tags">
+          <span class="tag">pixels</span>
+          <span class="tag">RGB</span>
+          <span class="tag">alpha</span>
+          <span class="tag">gamma</span>
+        </div>
+      </a>
+
+      <a href="ch4-raytracing.html" class="topic-card" style="--card-accent: #34d399;">
+        <span class="card-chapter">Chapter 4</span>
+        <h3>Ray Tracing</h3>
+        <p>Basic ray tracing algorithm, perspective vs parallel projection, computing viewing rays, ray-sphere and ray-triangle intersection.</p>
+        <div class="card-tags">
+          <span class="tag">viewing rays</span>
+          <span class="tag">intersection</span>
+          <span class="tag">projection</span>
+        </div>
+      </a>
+
+      <a href="ch5-shading.html" class="topic-card" style="--card-accent: #f59e0b;">
+        <span class="card-chapter">Chapters 4.5 + 5</span>
+        <h3>Surface Shading</h3>
+        <p>Light sources (point, directional, ambient), Lambertian diffuse reflection, Blinn-Phong specular model, BRDF, and irradiance equations.</p>
+        <div class="card-tags">
+          <span class="tag">Lambertian</span>
+          <span class="tag">Blinn-Phong</span>
+          <span class="tag">BRDF</span>
+          <span class="tag">irradiance</span>
+        </div>
+      </a>
+
+      <a href="ch7-transforms.html" class="topic-card" style="--card-accent: #f87171;">
+        <span class="card-chapter">Chapter 7</span>
+        <h3>Transformations</h3>
+        <p>2D &amp; 3D linear transformations (scale, shear, reflection, rotation), homogeneous coordinates, translation, affine transforms, and inverse matrices.</p>
+        <div class="card-tags">
+          <span class="tag">matrices</span>
+          <span class="tag">rotation</span>
+          <span class="tag">homogeneous</span>
+        </div>
+      </a>
+
+      <a href="ch9-rasterization.html" class="topic-card" style="--card-accent: #38bdf8;">
+        <span class="card-chapter">Chapter 9</span>
+        <h3>Rasterization</h3>
+        <p>Barycentric coordinates, triangle rasterization, line drawing, z-buffer algorithm, Gouraud and Phong shading, painters algorithm.</p>
+        <div class="card-tags">
+          <span class="tag">barycentric</span>
+          <span class="tag">z-buffer</span>
+          <span class="tag">Gouraud</span>
+        </div>
+      </a>
+
+      <a href="ch17-hardware.html" class="topic-card" style="--card-accent: #e879f9;">
+        <span class="card-chapter">Chapter 17</span>
+        <h3>Graphics Hardware &amp; OpenGL</h3>
+        <p>GPU architecture, heterogeneous multiprocessing, OpenGL state machine, VBOs, VAOs, GLSL vertex &amp; fragment shaders, and primitive types.</p>
+        <div class="card-tags">
+          <span class="tag">GPU</span>
+          <span class="tag">VBO</span>
+          <span class="tag">VAO</span>
+          <span class="tag">GLSL</span>
+          <span class="tag">shaders</span>
+        </div>
+      </a>
+
+    </div>
+  </section>
+
+  <section style="margin-bottom: 3rem;">
+    <h2 style="font-size:1.1rem; color:var(--text3); font-family:'Space Mono',monospace; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; margin-bottom:1.25rem; border-bottom: 1px solid var(--border); padding-bottom:0.6rem;">
+      How Concepts Connect
+    </h2>
+    <div class="diagram-box">
+      <div class="diagram-title">Concept Dependency Map</div>
+      <pre>
+ ┌─────────────────────────────────────────────────────────────────┐
+ │                     Ch 1: Intro / Pipeline                       │
+ │         object-order  ──────────────────  image-order           │
+ └──────────────┬─────────────────────────────────┬────────────────┘
+                │                                 │
+    ┌───────────▼──────────┐           ┌──────────▼────────────┐
+    │  Ch 17: GPU/OpenGL   │           │  Ch 4: Ray Tracing    │
+    │  (rasterization path)│           │  (image-order path)   │
+    └───────────┬──────────┘           └──────────┬────────────┘
+                │                                 │
+    ┌───────────▼──────────┐           ┌──────────▼────────────┐
+    │  Ch 9: Rasterization │           │  Ch 4.5/5: Shading    │
+    │  z-buffer, barycent. │◄──────────┤  Lambertian, Phong    │
+    └───────────┬──────────┘           └──────────┬────────────┘
+                │                                 │
+    ┌───────────▼──────────┐           ┌──────────▼────────────┐
+    │  Ch 7: Transforms    │           │  Ch 3: Raster Images  │
+    │  matrices for geom.  │           │  pixels, color, alpha │
+    └──────────────────────┘           └───────────────────────┘
+
+ Ch 3 underpins ALL rendering — everything outputs to a raster image.
+ Ch 7 transforms feed into BOTH pipelines (model → world → clip space).
+ Ch 5 shading is used in BOTH ray tracing (Ch 4) and rasterization (Ch 9).
+      </pre>
+    </div>
+  </section>
+
+  <section style="margin-bottom: 3rem;">
+    <h2 style="font-size:1.1rem; color:var(--text3); font-family:'Space Mono',monospace; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; margin-bottom:1.25rem; border-bottom: 1px solid var(--border); padding-bottom:0.6rem;">
+      Self-Study Only (Assumed / Not Examined)
+    </h2>
+    <div class="callout info">
+      <span class="callout-icon">ℹ️</span>
+      <div class="callout-body">
+        <strong>Chapters 2 and 6 — Assumed Knowledge</strong>
+        <p>These chapters (miscellaneous maths, linear algebra fundamentals) are assumed background knowledge and will not be directly examined, but underpin Chapter 7.</p>
+      </div>
+    </div>
+    <div class="callout warn">
+      <span class="callout-icon">⚠️</span>
+      <div class="callout-body">
+        <strong>Sections left as self-study</strong>
+        <p>Sections 4.4.3, 4.4.4 (polygon/box intersection), 9.1.3, 9.1.4, and Chapter 14 (advanced shading) are not examinable for Semester Test 1.</p>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<footer>
+  <div class="page-wrapper">COS344 Computer Graphics · University of Pretoria · Semester Test 1, 2026</div>
+</footer>
+
+<script>
+(function(){
+  var btn = document.querySelector(".nav-toggle");
+  var menu = document.querySelector(".nav-links");
+  if(btn && menu){
+    btn.addEventListener("click", function(){
+      var open = menu.classList.toggle("open");
+      btn.classList.toggle("open", open);
+      btn.setAttribute("aria-expanded", open);
+    });
+  }
+})();
+</script>
+</body>
+</html>

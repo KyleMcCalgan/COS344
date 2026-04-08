@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -E \"\\\\.\\(html|css\\)$\")",
+      "Bash(zip:*)",
+      "Bash(python3:*)"
+    ]
+  }
+}

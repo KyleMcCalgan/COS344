@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ch 7: Transformations — COS344</title>
+  <link rel="stylesheet" href="style.css?v=3" />
+</head>
+<body>
+
+<nav class="site-nav">
+  <div class="nav-inner">
+  <a href="index.html" class="nav-logo">COS344</a>
+  <ul class="nav-links">
+    <li><a href="index.html">Overview</a></li>
+    <li><a href="ch1-intro.html">Ch 1</a></li>
+    <li><a href="ch3-raster.html">Ch 3</a></li>
+    <li><a href="ch4-raytracing.html">Ch 4</a></li>
+    <li><a href="ch5-shading.html">Ch 5</a></li>
+    <li><a href="ch7-transforms.html" class="active">Ch 7</a></li>
+    <li><a href="ch9-rasterization.html">Ch 9</a></li>
+    <li><a href="ch17-hardware.html">Ch 17</a></li>
+  </ul>
+  <button class="nav-toggle" aria-label="Toggle navigation" aria-expanded="false">
+    <span></span><span></span><span></span>
+  </button>
+  </div>
+</nav>
+
+<div class="page-wrapper">
+  <div class="topic-header">
+    <a href="index.html" class="back-link">← Back to Overview</a>
+    <div class="chapter-label">Chapter 7</div>
+    <h1>Transformations</h1>
+    <p class="lead">Matrices are the backbone of 3D graphics — every object position, rotation, and scaling is a matrix multiplication. This chapter covers 2D and 3D linear transforms, homogeneous coordinates, and inverses.</p>
+  </div>
+
+  <div class="connections-bar">
+    <span style="font-size:0.78rem; color:var(--text3); font-family:'Space Mono',monospace; align-self:center;">Connects to →</span>
+    <a href="ch9-rasterization.html" class="conn-pill"><span class="pill-dot" style="background:#38bdf8;"></span> Ch 9: Model/camera/projection matrices</a>
+    <a href="ch17-hardware.html" class="conn-pill"><span class="pill-dot" style="background:#e879f9;"></span> Ch 17: Matrices in GLSL vertex shaders</a>
+    <a href="ch5-shading.html" class="conn-pill"><span class="pill-dot" style="background:#f59e0b;"></span> Ch 5: Normal vector transforms</a>
+  </div>
+
+  <div class="content-layout">
+    <main class="main-content">
+
+      <section>
+        <h2>Why Matrices? <span class="section-num">§ motivation</span></h2>
+        <p>Instead of applying separate formulas to each vertex, we pack a transformation into a <strong>matrix</strong> and apply it with a single matrix-vector multiplication. This enables:</p>
+        <ul>
+          <li>Composing multiple transforms: <code>M = M3 · M2 · M1</code></li>
+          <li>Passing transforms efficiently to the GPU</li>
+          <li>Inverting transforms easily</li>
+        </ul>
+
+        <div class="algo-block">
+          <div class="algo-title">Algorithm — Applying a Transformation Matrix</div>
+          <div><span class="kw">function</span> <span class="fn">applyTransform</span>(Matrix T, Object o)</div>
+          <div class="indent1">vertices = o.<span class="fn">getVertices</span>()</div>
+          <div class="indent1"><span class="kw">for each</span> v <span class="kw">in</span> vertices <span class="kw">do</span></div>
+          <div class="indent2">v' = T · v  <span class="cm">// matrix × vector</span></div>
+          <div class="indent2"><span class="fn">updateVertex</span>(o, v, v')</div>
+          <div class="indent1"><span class="kw">end for</span></div>
+          <div class="indent1"><span class="fn">draw</span>(o.<span class="fn">getVertices</span>())</div>
+          <div><span class="kw">end function</span></div>
+        </div>
+      </section>
+
+      <section>
+        <h2>Section 7.1 — 2D Linear Transformations</h2>
+        <p>A <strong>linear transformation</strong> maps a 2D vector to another 2D vector via matrix multiplication:</p>
+        <div class="math-block">
+[a11  a12] [x]   [a11·x + a12·y]
+[a21  a22] [y] = [a21·x + a22·y]
+        </div>
+
+        <h3>7.1.1 — Scaling</h3>
+        <div class="math-block">
+scale(sx, sy) = [sx  0 ]
+                [ 0  sy]
+
+Result: x' = sx·x,  y' = sy·y
+
+If sx == sy: uniform scale (shape preserved)
+If sx != sy: non-uniform scale (object deformed/stretched)
+        </div>
+
+        <h3>7.1.2 — Shearing</h3>
+        <div class="math-block">
+shear_x(s) = [1  s]    shear_y(s) = [1  0]
+             [0  1]                   [s  1]
+
+shear_x: x' = x + s·y,  y' = y   (horizontal shear)
+shear_y: x' = x,  y' = s·x + y   (vertical shear)
+
+Alternative: shear_x(φ) uses tan(φ) — tilts by angle φ from vertical axis
+        </div>
+
+        <h3>7.1.3 — Rotation</h3>
+        <div class="math-block">
+rotate(φ) = [cos(φ)  −sin(φ)]
+            [sin(φ)   cos(φ)]
+
+Derivation: rotate point (r·cos α, r·sin α) by φ:
+  x' = r·cos(α+φ) = x·cos(φ) − y·sin(φ)
+  y' = r·sin(α+φ) = y·cos(φ) + x·sin(φ)
+
+φ > 0: counter-clockwise rotation
+        </div>
+
+        <h3>7.1.4 — Reflection</h3>
+        <div class="math-block">
+reflect_y (across y-axis) = [−1  0]    x' = −x,  y' =  y
+                             [ 0  1]
+
+reflect_x (across x-axis) = [ 1  0]    x' =  x,  y' = −y
+                             [ 0 −1]
+
+Reflection = scaling with a negative scale factor (−1) on one axis.
+        </div>
+
+        <div class="callout exam">
+          <span class="callout-icon">🎯</span>
+          <div class="callout-body">
+            <strong>Exam type question</strong>
+            <p>Given a vertex and a transformation matrix, calculate the resulting vertex. Practice applying each matrix type by hand.</p>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2>Section 7.3 — Translation &amp; Homogeneous Coordinates</h2>
+        <p>Translation <em>cannot</em> be expressed as a 2×2 or 3×3 linear transformation — it's not linear (it doesn't preserve the origin). The solution is <strong>homogeneous coordinates</strong>: add an extra dimension.</p>
+
+        <h3>2D Homogeneous Coordinates</h3>
+        <div class="math-block">
+2D point (x, y) becomes (x, y, 1) in homogeneous coords.
+
+Translation matrix (3×3):
+T(dx, dy) = [1  0  dx]   Result: x' = x + dx
+            [0  1  dy]           y' = y + dy
+            [0  0   1]
+
+All 2D transforms as 3×3:
+scale:   [sx  0  0]    rotate:  [cos φ  −sin φ  0]
+         [ 0 sy  0]             [sin φ   cos φ  0]
+         [ 0  0  1]             [  0       0    1]
+        </div>
+
+        <h3>3D Translation (4×4 homogeneous)</h3>
+        <div class="math-block">
+3D point (x, y, z) becomes (x, y, z, 1).
+
+T(dx, dy, dz) = [1  0  0  dx]
+                [0  1  0  dy]
+                [0  0  1  dz]
+                [0  0  0   1]
+        </div>
+
+        <div class="callout info">
+          <span class="callout-icon">💡</span>
+          <div class="callout-body">
+            <strong>Why homogeneous coordinates?</strong>
+            <p>They allow ALL transformations (including translation) to be expressed as matrix multiplication. This means the full model-view-projection pipeline is just a sequence of matrix multiplications — exactly what the GPU does.</p>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2>Section 7.2 — 3D Linear Transformations</h2>
+
+        <h3>3D Scale</h3>
+        <div class="math-block">
+scale(sx, sy, sz) = [sx  0   0 ]
+                    [ 0  sy  0 ]
+                    [ 0   0  sz]
+        </div>
+
+        <h3>3D Rotation</h3>
+        <div class="math-block">
+Rotate about Z-axis:          Rotate about X-axis:
+[cos φ  −sin φ  0]            [1    0       0  ]
+[sin φ   cos φ  0]            [0  cos φ  −sin φ]
+[  0       0    1]            [0  sin φ   cos φ]
+
+Rotate about Y-axis:
+[ cos φ  0  sin φ]
+[   0    1    0  ]
+[−sin φ  0  cos φ]
+
+Note: Y-axis rotation has sin signs swapped — remember this!
+        </div>
+
+        <h3>Rotation About an Arbitrary Axis (composed)</h3>
+        <p>To rotate an object about its own centre (not the world origin):</p>
+        <ol>
+          <li>Translate the object so its centre is at the world origin: <strong>T(−centre)</strong></li>
+          <li>Apply the rotation matrix: <strong>R(φ)</strong></li>
+          <li>Translate back: <strong>T(+centre)</strong></li>
+        </ol>
+        <div class="math-block">
+M_total = T(+centre) · R(φ) · T(−centre)
+
+Example: sphere at (1, 0.5, −0.25), rotate 25° about its x-axis:
+  Step 1: T(−1, −0.5, 0.25)  // move centre to origin
+  Step 2: Rx(25°)              // rotate
+  Step 3: T(+1, +0.5, −0.25)  // move back
+
+M = T(+c) · Rx(25°) · T(−c)
+        </div>
+
+        <div class="callout exam">
+          <span class="callout-icon">🎯</span>
+          <div class="callout-body">
+            <strong>Matrix composition order matters</strong>
+            <p>Transformations are applied right-to-left: <code>M = A·B·C</code> applies C first, then B, then A. Always construct the matrices in the correct order.</p>
+          </div>
+        </div>
+
+        <h3>7.2.2 — Transforming Normal Vectors</h3>
+        <p>Normal vectors do <strong>not</strong> transform the same way as regular points/vertices. Using the regular transform M on a normal gives an incorrect result (normal will no longer be perpendicular to the surface).</p>
+
+        <div class="math-block">
+Correct normal transform:  n_new = (M⁻¹)ᵀ · n
+
+Where:
+  M    = the transformation matrix applied to vertices
+  M⁻¹  = inverse of M
+  ᵀ    = transpose
+  n    = original normal (unit vector)
+
+After transforming, re-normalize n_new for lighting calculations.
+        </div>
+      </section>
+
+      <section>
+        <h2>Section 7.4 — Inverse Transformations</h2>
+        <p>Two options for undoing a transformation:</p>
+
+        <div class="table-wrap">
+        <table class="comparison-table">
+          <thead>
+            <tr><th>Option</th><th>Method</th><th>Example</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Option A</strong></td>
+              <td>Compute the matrix inverse: <code>M⁻¹</code> such that <code>M·M⁻¹ = I</code></td>
+              <td>General — works for any invertible matrix</td>
+            </tr>
+            <tr>
+              <td><strong>Option B</strong></td>
+              <td>Construct an "undo" matrix manually</td>
+              <td><code>T(d)</code> → undo with <code>T(−d)</code><br><code>Rx(45°)</code> → undo with <code>Rx(−45°)</code></td>
+            </tr>
+          </tbody>
+        </table>
+        </div>
+      </section>
+
+      <section>
+        <h2>Practical Example</h2>
+        <div class="code-block">
+          <div class="code-header"><span class="dot" style="background:#f87171;"></span><span class="dot" style="background:#f59e0b;"></span><span class="dot" style="background:#34d399;"></span> GLSL (used in vertex shader, Ch 17)</div>
+          <pre>// Vertex shader applies transformation matrices
+#version 330 core
+layout(location = 0) in vec3 in_Position;
+layout(location = 1) in vec3 in_Normal;
+
+uniform mat4 model;       // object → world space
+uniform mat4 view;        // world → camera space
+uniform mat4 projection;  // camera → clip space
+uniform mat3 normalMatrix; // = transpose(inverse(model))
+
+out vec3 fragNormal;
+
+void main() {
+    // Apply model-view-projection (right to left)
+    gl_Position = projection * view * model * vec4(in_Position, 1.0);
+
+    // Transform normal correctly
+    fragNormal = normalize(normalMatrix * in_Normal);
+}</pre>
+        </div>
+      </section>
+
+    </main>
+
+    <aside class="sidebar">
+      <div class="sidebar-card">
+        <h4>On This Page</h4>
+        <ul>
+          <li><a href="#">Why Matrices</a></li>
+          <li><a href="#">2D: Scale, Shear, Rotate, Reflect</a></li>
+          <li><a href="#">Homogeneous Coords</a></li>
+          <li><a href="#">3D Transforms</a></li>
+          <li><a href="#">Normal Vectors</a></li>
+          <li><a href="#">Inverses</a></li>
+        </ul>
+      </div>
+
+      <div class="sidebar-card">
+        <h4>Related Topics</h4>
+        <a href="ch9-rasterization.html" class="connection-item">
+          <span class="conn-dot" style="background:#38bdf8;"></span>
+          <div>
+            <div class="conn-name">Chapter 9: Rasterization</div>
+            <div class="conn-desc">MVP matrices applied in the vertex stage of the pipeline</div>
+          </div>
+        </a>
+        <a href="ch17-hardware.html" class="connection-item">
+          <span class="conn-dot" style="background:#e879f9;"></span>
+          <div>
+            <div class="conn-name">Chapter 17: GLSL</div>
+            <div class="conn-desc">mat4 types in vertex shaders, uniform transform matrices</div>
+          </div>
+        </a>
+        <a href="ch5-shading.html" class="connection-item">
+          <span class="conn-dot" style="background:#f59e0b;"></span>
+          <div>
+            <div class="conn-name">Chapter 5: Shading</div>
+            <div class="conn-desc">Normal vectors must be transformed with (M⁻¹)ᵀ for correct shading</div>
+          </div>
+        </a>
+      </div>
+
+      <div class="sidebar-card">
+        <h4>Key Matrices</h4>
+        <ul>
+          <li><a href="#">Scale: diag(sx, sy, sz)</a></li>
+          <li><a href="#">Rotate Z: cos/sin matrix</a></li>
+          <li><a href="#">Translate: 4×4 homogeneous</a></li>
+          <li><a href="#">Normal: (M⁻¹)ᵀ</a></li>
+        </ul>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<footer><div class="page-wrapper">COS344 Computer Graphics · Chapter 7</div></footer>
+<script>
+(function(){
+  var btn = document.querySelector(".nav-toggle");
+  var menu = document.querySelector(".nav-links");
+  if(btn && menu){
+    btn.addEventListener("click", function(){
+      var open = menu.classList.toggle("open");
+      btn.classList.toggle("open", open);
+      btn.setAttribute("aria-expanded", open);
+    });
+  }
+})();
+</script>
+</body>
+</html>

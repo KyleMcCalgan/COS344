@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ch 9: Rasterization — COS344</title>
+  <link rel="stylesheet" href="style.css?v=3" />
+</head>
+<body>
+
+<nav class="site-nav">
+  <div class="nav-inner">
+  <a href="index.html" class="nav-logo">COS344</a>
+  <ul class="nav-links">
+    <li><a href="index.html">Overview</a></li>
+    <li><a href="ch1-intro.html">Ch 1</a></li>
+    <li><a href="ch3-raster.html">Ch 3</a></li>
+    <li><a href="ch4-raytracing.html">Ch 4</a></li>
+    <li><a href="ch5-shading.html">Ch 5</a></li>
+    <li><a href="ch7-transforms.html">Ch 7</a></li>
+    <li><a href="ch9-rasterization.html" class="active">Ch 9</a></li>
+    <li><a href="ch17-hardware.html">Ch 17</a></li>
+  </ul>
+  <button class="nav-toggle" aria-label="Toggle navigation" aria-expanded="false">
+    <span></span><span></span><span></span>
+  </button>
+  </div>
+</nav>
+
+<div class="page-wrapper">
+  <div class="topic-header">
+    <a href="index.html" class="back-link">← Back to Overview</a>
+    <div class="chapter-label">Chapter 9</div>
+    <h1>Rasterization</h1>
+    <p class="lead">The object-order rendering approach used in real-time graphics. Converts geometric primitives (triangles) into pixel fragments using barycentric coordinates, handles hidden surfaces with z-buffering, and applies shading per-vertex or per-fragment.</p>
+  </div>
+
+  <div class="connections-bar">
+    <span style="font-size:0.78rem; color:var(--text3); font-family:'Space Mono',monospace; align-self:center;">Connects to →</span>
+    <a href="ch1-intro.html" class="conn-pill"><span class="pill-dot" style="background:#4f8ef7;"></span> Ch 1: Object-order rendering paradigm</a>
+    <a href="ch7-transforms.html" class="conn-pill"><span class="pill-dot" style="background:#f87171;"></span> Ch 7: MVP matrix applied in vertex stage</a>
+    <a href="ch5-shading.html" class="conn-pill"><span class="pill-dot" style="background:#f59e0b;"></span> Ch 5: Gouraud &amp; Phong shading here</a>
+    <a href="ch17-hardware.html" class="conn-pill"><span class="pill-dot" style="background:#e879f9;"></span> Ch 17: OpenGL implements this pipeline</a>
+  </div>
+
+  <div class="content-layout">
+    <main class="main-content">
+
+      <section>
+        <h2>Overview of the Rasterization Pipeline</h2>
+        <div class="diagram-box">
+          <div class="diagram-title">Object-order 3D rendering pipeline</div>
+          <pre>
+ 3D Geometry (vertices)
+       │
+       ▼
+ ┌──────────────────────────────┐
+ │  Vertex Processing           │  Apply MVP matrices (Ch 7)
+ │  (vertex shader, Ch 17)      │  → clip-space coordinates
+ └──────────────┬───────────────┘
+                │
+                ▼
+ ┌──────────────────────────────┐
+ │  Triangle Setup / Clipping   │  Cull invisible triangles
+ └──────────────┬───────────────┘
+                │
+                ▼
+ ┌──────────────────────────────┐
+ │  Rasterization               │  Triangle → pixel fragments
+ │  (§9.1)                      │  Using barycentric coords
+ └──────────────┬───────────────┘
+                │
+                ▼
+ ┌──────────────────────────────┐
+ │  Fragment Processing         │  Compute colour per fragment
+ │  (fragment shader, Ch 17)    │  Phong shading (Ch 5)
+ └──────────────┬───────────────┘
+                │
+                ▼
+ ┌──────────────────────────────┐
+ │  Fragment Blending / Z-test  │  Depth test (z-buffer §9.2.3)
+ │  (output merge)              │  Alpha blending (Ch 3)
+ └──────────────┬───────────────┘
+                │
+                ▼
+         Framebuffer → Screen
+          </pre>
+        </div>
+      </section>
+
+      <section>
+        <h2>Section 9.1 — Rasterization</h2>
+        <p>Rasterization is the process of determining which pixels are covered by a geometric primitive (triangle), and computing their attributes (colour, depth, texture coords) by interpolation.</p>
+
+        <h3>§2.9 / §9.1.2 — Barycentric Coordinates</h3>
+        <p>Any point inside a triangle with vertices <strong>a</strong>, <strong>b</strong>, <strong>c</strong> can be expressed as:</p>
+
+        <div class="math-block">
+p(α, β, γ) = α·a + β·b + γ·c
+
+Constraint: α + β + γ = 1  (where α ≡ 1 − β − γ)
+
+Point is INSIDE the triangle iff:
+  0 &lt; α &lt; 1,  0 &lt; β &lt; 1,  0 &lt; γ &lt; 1
+
+If one component = 0: point is on an edge
+If two components = 0: point is at a vertex
+        </div>
+
+        <div class="callout warn">
+          <span class="callout-icon">⚠️</span>
+          <div class="callout-body">
+            <strong>Non-standard basis</strong>
+            <p>Barycentric coordinates use a non-orthogonal basis. Standard linear algebra operations do not behave as expected — see Section 2.9 of the textbook.</p>
+          </div>
+        </div>
+
+        <h3>Colour Interpolation (Gouraud)</h3>
+        <p>If each vertex has a colour (c0, c1, c2), the colour at any interior point is:</p>
+        <div class="math-block">
+c = α·c0 + β·c1 + γ·c2
+
+This is called Gouraud interpolation (see §9.2.4).
+        </div>
+
+        <h3>Triangle Rasterization Algorithm</h3>
+        <p>The rule: draw a pixel if and only if the <strong>centre of the pixel</strong> lies inside the triangle (all barycentric coords ∈ (0,1)).</p>
+
+        <div class="algo-block">
+          <div class="algo-title">Algorithm 2 — Brute-Force Triangle Rasterization</div>
+          <div><span class="kw">for each</span> pixel (x, y) <span class="kw">in</span> bounding box <span class="kw">do</span></div>
+          <div class="indent1">compute (α, β, γ) for pixel centre</div>
+          <div class="indent1"><span class="kw">if</span> α ∈ [0,1] <span class="kw">and</span> β ∈ [0,1] <span class="kw">and</span> γ ∈ [0,1] <span class="kw">then</span></div>
+          <div class="indent2">c = α·c0 + β·c1 + γ·c2</div>
+          <div class="indent2"><span class="fn">drawPixel</span>(x, y, c)</div>
+          <div class="indent1"><span class="kw">end if</span></div>
+          <div><span class="kw">end for</span></div>
+        </div>
+
+        <h3>Shared edge problem</h3>
+        <p>If two adjacent triangles share an edge and a pixel centre lands exactly on that edge, which triangle draws it?</p>
+        <ul>
+          <li>Options: draw twice (overdraw), don't draw (gap), draw exactly once</li>
+          <li>Textbook solution: use an <strong>off-screen point</strong> — a point guaranteed to always be on one side of any edge. Whichever triangle "owns" the side containing that point draws the pixel.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>Section 9.2 — Operations Before and After Rasterization</h2>
+
+        <h3>§9.2.1 — Simple 2D Drawing</h3>
+        <p>Simplest possible case: vertices are already in pixel coordinates, nothing happens in vertex or fragment stages. Application supplies primitives, rasterizer fills them with solid colour.</p>
+
+        <h3>§9.2.2 — Minimal 3D Pipeline</h3>
+        <p>For 3D rendering, the vertex stage multiplies each vertex by the composite <strong>MVP matrix</strong>:</p>
+        <div class="math-block">
+clip_position = Projection · View · Model · vertex_position
+
+Where:
+  Model      = object → world space (translation, rotation, scale)
+  View       = world → camera space (camera transform)
+  Projection = camera → clip space (frustum/orthographic)
+        </div>
+
+        <p>The <strong>Painter's Algorithm</strong> was an early approach to ordering primitives back-to-front, but it fails for intersecting objects and occlusion cycles — hence the z-buffer was developed.</p>
+
+        <h3>§9.2.3 — Z-Buffer (Hidden Surface Removal)</h3>
+        <p>The z-buffer (depth buffer) solves visibility: for each pixel, keep track of the depth of the closest surface drawn so far.</p>
+
+        <div class="algo-block">
+          <div class="algo-title">Z-Buffer Algorithm</div>
+          <div><span class="fn">initialise</span> z_buffer[all pixels] = +∞</div>
+          <div><span class="kw">for each</span> fragment (x, y, z) <span class="kw">do</span></div>
+          <div class="indent1"><span class="kw">if</span> z &lt; z_buffer[x][y] <span class="kw">then</span></div>
+          <div class="indent2">z_buffer[x][y] = z</div>
+          <div class="indent2">colour[x][y] = fragment_colour</div>
+          <div class="indent1"><span class="kw">end if</span>  <span class="cm">// else discard fragment</span></div>
+          <div><span class="kw">end for</span></div>
+        </div>
+
+        <div class="callout tip">
+          <span class="callout-icon">✅</span>
+          <div class="callout-body">
+            <strong>Z-buffer in OpenGL (Ch 17)</strong>
+            <p>Enabled with <code>glEnable(GL_DEPTH_TEST)</code> and <code>glDepthFunc(GL_LESS)</code>. The depth buffer must be cleared each frame with <code>glClear(GL_DEPTH_BUFFER_BIT)</code>.</p>
+          </div>
+        </div>
+
+        <h3>§9.2.4 — Gouraud Shading (per-vertex)</h3>
+        <p>Shading is computed <strong>per vertex</strong> in the vertex stage. The resulting colour is then interpolated across the triangle using barycentric coordinates during rasterization.</p>
+        <ul>
+          <li>Faster (fewer shading computations)</li>
+          <li>Less accurate — specular highlights can disappear between vertices</li>
+        </ul>
+
+        <h3>§9.2.5 — Phong Shading (per-fragment)</h3>
+        <p>Geometric information (normals, positions) is <strong>interpolated</strong> through rasterization, and shading is computed <strong>per fragment</strong> in the fragment shader.</p>
+        <ul>
+          <li>More accurate — specular highlights computed at each pixel</li>
+          <li>More expensive — shading runs for every fragment</li>
+        </ul>
+
+        <div class="table-wrap">
+        <table class="comparison-table">
+          <thead>
+            <tr><th>Method</th><th>Where shading happens</th><th>Interpolated</th><th>Quality</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong class="hl-blue">Gouraud</strong></td>
+              <td>Vertex stage (vertex shader)</td>
+              <td>Colour values</td>
+              <td>Lower — can miss specular highlights</td>
+            </tr>
+            <tr>
+              <td><strong class="hl-green">Phong</strong></td>
+              <td>Fragment stage (fragment shader)</td>
+              <td>Normals &amp; positions</td>
+              <td>Higher — correct specular at every pixel</td>
+            </tr>
+          </tbody>
+        </table>
+        </div>
+      </section>
+
+      <section>
+        <h2>Section 9.3 — Simple Anti-aliasing</h2>
+        <p><strong>Aliasing</strong> is the jagged "staircase" effect on triangle edges caused by the binary nature of pixel sampling. Anti-aliasing smooths edges by taking multiple samples per pixel (MSAA) or filtering the coverage.</p>
+      </section>
+
+    </main>
+
+    <aside class="sidebar">
+      <div class="sidebar-card">
+        <h4>On This Page</h4>
+        <ul>
+          <li><a href="#">Pipeline Overview</a></li>
+          <li><a href="#">Barycentric Coordinates</a></li>
+          <li><a href="#">Triangle Rasterization</a></li>
+          <li><a href="#">MVP Matrix</a></li>
+          <li><a href="#">Z-Buffer</a></li>
+          <li><a href="#">Gouraud vs Phong</a></li>
+        </ul>
+      </div>
+
+      <div class="sidebar-card">
+        <h4>Related Topics</h4>
+        <a href="ch7-transforms.html" class="connection-item">
+          <span class="conn-dot" style="background:#f87171;"></span>
+          <div>
+            <div class="conn-name">Chapter 7: Transforms</div>
+            <div class="conn-desc">MVP matrices are composed from Ch 7 transforms</div>
+          </div>
+        </a>
+        <a href="ch5-shading.html" class="connection-item">
+          <span class="conn-dot" style="background:#f59e0b;"></span>
+          <div>
+            <div class="conn-name">Chapter 5: Shading</div>
+            <div class="conn-desc">Lambertian/Phong models applied in vertex or fragment stage</div>
+          </div>
+        </a>
+        <a href="ch17-hardware.html" class="connection-item">
+          <span class="conn-dot" style="background:#e879f9;"></span>
+          <div>
+            <div class="conn-name">Chapter 17: OpenGL</div>
+            <div class="conn-desc">glEnable(GL_DEPTH_TEST), vertex arrays, fragment shaders</div>
+          </div>
+        </a>
+        <a href="ch4-raytracing.html" class="connection-item">
+          <span class="conn-dot" style="background:#34d399;"></span>
+          <div>
+            <div class="conn-name">Chapter 4: Ray Tracing</div>
+            <div class="conn-desc">Barycentric coords shared between intersection and rasterization</div>
+          </div>
+        </a>
+      </div>
+
+      <div class="sidebar-card">
+        <h4>Key Concepts</h4>
+        <ul>
+          <li><a href="#">α+β+γ = 1 (barycentric)</a></li>
+          <li><a href="#">Z-buffer: keep smallest z</a></li>
+          <li><a href="#">Gouraud: interpolate colour</a></li>
+          <li><a href="#">Phong: interpolate normal</a></li>
+        </ul>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<footer><div class="page-wrapper">COS344 Computer Graphics · Chapter 9</div></footer>
+<script>
+(function(){
+  var btn = document.querySelector(".nav-toggle");
+  var menu = document.querySelector(".nav-links");
+  if(btn && menu){
+    btn.addEventListener("click", function(){
+      var open = menu.classList.toggle("open");
+      btn.classList.toggle("open", open);
+      btn.setAttribute("aria-expanded", open);
+    });
+  }
+})();
+</script>
+</body>
+</html>

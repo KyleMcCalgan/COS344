@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ch 1: Introduction — COS344</title>
+  <link rel="stylesheet" href="style.css?v=3" />
+</head>
+<body>
+
+<nav class="site-nav">
+  <div class="nav-inner">
+  <a href="index.html" class="nav-logo">COS344</a>
+  <ul class="nav-links">
+    <li><a href="index.html">Overview</a></li>
+    <li><a href="ch1-intro.html" class="active">Ch 1</a></li>
+    <li><a href="ch3-raster.html">Ch 3</a></li>
+    <li><a href="ch4-raytracing.html">Ch 4</a></li>
+    <li><a href="ch5-shading.html">Ch 5</a></li>
+    <li><a href="ch7-transforms.html">Ch 7</a></li>
+    <li><a href="ch9-rasterization.html">Ch 9</a></li>
+    <li><a href="ch17-hardware.html">Ch 17</a></li>
+  </ul>
+  <button class="nav-toggle" aria-label="Toggle navigation" aria-expanded="false">
+    <span></span><span></span><span></span>
+  </button>
+  </div>
+</nav>
+
+<div class="page-wrapper">
+  <div class="topic-header">
+    <a href="index.html" class="back-link">← Back to Overview</a>
+    <div class="chapter-label">Chapter 1</div>
+    <h1>Introduction to Computer Graphics</h1>
+    <p class="lead">What computer graphics is, where it's used, how rendering works conceptually, and how graphics APIs are structured — the foundation for everything else in COS344.</p>
+  </div>
+
+  <div class="connections-bar">
+    <span style="font-size:0.78rem; color:var(--text3); font-family:'Space Mono',monospace; align-self:center;">Connects to →</span>
+    <a href="ch4-raytracing.html" class="conn-pill"><span class="pill-dot" style="background:#34d399;"></span> Ch 4: Ray Tracing (image-order rendering)</a>
+    <a href="ch9-rasterization.html" class="conn-pill"><span class="pill-dot" style="background:#38bdf8;"></span> Ch 9: Rasterization (object-order rendering)</a>
+    <a href="ch17-hardware.html" class="conn-pill"><span class="pill-dot" style="background:#e879f9;"></span> Ch 17: OpenGL API</a>
+  </div>
+
+  <div class="content-layout">
+    <main class="main-content">
+
+      <section>
+        <h2>What is Computer Graphics?</h2>
+        <p>Computer graphics is the field of creating, manipulating, and rendering visual content using computers. It encompasses everything from generating 2D images to simulating 3D scenes with realistic lighting.</p>
+
+        <h3>Applications</h3>
+        <ul>
+          <li><strong>Video games</strong> — real-time 3D rendering</li>
+          <li><strong>Cartoons &amp; animated films</strong> — pre-rendered CG imagery</li>
+          <li><strong>Visual effects (VFX)</strong> — compositing CG with live footage</li>
+          <li><strong>CAD/CAM</strong> — engineering &amp; manufacturing visualisation</li>
+          <li><strong>Medical imaging</strong> — MRI/CT scan visualisation</li>
+          <li><strong>Simulations</strong> — physics, training, scientific modelling</li>
+          <li><strong>Information visualisation</strong> — data representation</li>
+          <li><strong>User interaction</strong> — GUI rendering</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>The Two Rendering Paradigms <span class="section-num">§ core concept</span></h2>
+        <p>This is one of the most fundamental distinctions in graphics — understanding the difference will help you see how Chapters 4 and 9 relate to each other.</p>
+
+        <div class="callout exam">
+          <span class="callout-icon">🎯</span>
+          <div class="callout-body">
+            <strong>Exam-likely question</strong>
+            <p>Know the definitions of both rendering approaches and be able to give an example of each (Ray Tracing = image-order; Rasterization = object-order).</p>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+        <table class="comparison-table">
+          <thead>
+            <tr>
+              <th>Approach</th>
+              <th>How it works</th>
+              <th>Loop structure</th>
+              <th>Example</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong class="hl-green">Image-order rendering</strong></td>
+              <td>Each <em>pixel</em> is considered in turn. For each pixel, all objects that influence it are found and the colour is computed.</td>
+              <td><code>for each pixel → find intersecting objects</code></td>
+              <td><a href="ch4-raytracing.html" style="color:var(--accent);">Ray Tracing (Ch 4)</a></td>
+            </tr>
+            <tr>
+              <td><strong class="hl-blue">Object-order rendering</strong></td>
+              <td>Each <em>object</em> is considered in turn. For each object, all pixels it influences are found and updated.</td>
+              <td><code>for each object → find influenced pixels</code></td>
+              <td><a href="ch9-rasterization.html" style="color:var(--accent);">Rasterization (Ch 9)</a></td>
+            </tr>
+          </tbody>
+        </table>
+        </div>
+      </section>
+
+      <section>
+        <h2>Graphics APIs <span class="section-num">§1 context</span></h2>
+        <p>A graphics program typically uses two APIs working together:</p>
+        <ol>
+          <li><strong>Graphics API</strong> — to draw things (e.g. OpenGL, Direct3D)</li>
+          <li><strong>User Interface (UI) API</strong> — to handle window creation &amp; input (e.g. GLFW)</li>
+        </ol>
+
+        <h3>API paradigms</h3>
+        <div class="table-wrap">
+        <table class="comparison-table">
+          <thead>
+            <tr><th>Paradigm</th><th>Description</th><th>Examples</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Integrated</strong></td>
+              <td>Graphics and UI toolkits are built-in features of the language/platform.</td>
+              <td>Java (Swing/AWT)</td>
+            </tr>
+            <tr>
+              <td><strong>Library</strong></td>
+              <td>Graphics and UI APIs are separate, provided by external libraries.</td>
+              <td>OpenGL + GLFW in C++</td>
+            </tr>
+          </tbody>
+        </table>
+        </div>
+
+        <div class="callout info">
+          <span class="callout-icon">💡</span>
+          <div class="callout-body">
+            <strong>COS344 uses OpenGL 3.3 with C++</strong>
+            <p>Specifically OpenGL 3.3 Core Profile. GLFW is used for window management. OpenGL follows the <strong>Library</strong> paradigm — it's a C library you link against, separate from the OS window system.</p>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2>The Graphics Pipeline (Overview)</h2>
+        <p>Modern computers have optimised graphical pipelines. The three fundamental operations are:</p>
+        <ol>
+          <li><strong>Map 3D coordinates to 2D screen coordinates</strong> — projection (see <a href="ch7-transforms.html" style="color:var(--accent);">Ch 7</a>)</li>
+          <li><strong>Shade polygons</strong> to appear realistic (see <a href="ch5-shading.html" style="color:var(--accent);">Ch 5</a>)</li>
+          <li><strong>Render polygons in the correct order</strong> — depth/visibility (see <a href="ch9-rasterization.html" style="color:var(--accent);">Ch 9</a>)</li>
+        </ol>
+
+        <div class="diagram-box">
+          <div class="diagram-title">High-level graphics pipeline flow</div>
+          <pre>
+ 3D Scene Data
+      │
+      ▼
+ ┌──────────────────┐
+ │  Vertex Stage    │  ← Transform 3D positions (Ch 7)
+ │  (Geometry)      │
+ └────────┬─────────┘
+          │
+          ▼
+ ┌──────────────────┐
+ │  Rasterization   │  ← Convert triangles → fragments (Ch 9)
+ │  Stage           │
+ └────────┬─────────┘
+          │
+          ▼
+ ┌──────────────────┐
+ │  Fragment Stage  │  ← Shading, colour per pixel (Ch 5)
+ │  (Pixel shader)  │
+ └────────┬─────────┘
+          │
+          ▼
+ ┌──────────────────┐
+ │  Output Merge    │  ← Z-buffer, blending (Ch 9)
+ │  (Framebuffer)   │
+ └────────┬─────────┘
+          │
+          ▼
+     Raster Image (Ch 3)
+          </pre>
+        </div>
+        <p>This pipeline is implemented in hardware on the GPU (see <a href="ch17-hardware.html" style="color:var(--accent);">Chapter 17</a>) and exposed via OpenGL.</p>
+      </section>
+
+    </main>
+
+    <aside class="sidebar">
+      <div class="sidebar-card">
+        <h4>On This Page</h4>
+        <ul>
+          <li><a href="#">What is CG?</a></li>
+          <li><a href="#">Rendering Paradigms</a></li>
+          <li><a href="#">Graphics APIs</a></li>
+          <li><a href="#">The Pipeline</a></li>
+        </ul>
+      </div>
+
+      <div class="sidebar-card">
+        <h4>Related Topics</h4>
+        <a href="ch4-raytracing.html" class="connection-item">
+          <span class="conn-dot" style="background:#34d399;"></span>
+          <div>
+            <div class="conn-name">Chapter 4: Ray Tracing</div>
+            <div class="conn-desc">The image-order rendering approach introduced here</div>
+          </div>
+        </a>
+        <a href="ch9-rasterization.html" class="connection-item">
+          <span class="conn-dot" style="background:#38bdf8;"></span>
+          <div>
+            <div class="conn-name">Chapter 9: Rasterization</div>
+            <div class="conn-desc">The object-order rendering approach introduced here</div>
+          </div>
+        </a>
+        <a href="ch17-hardware.html" class="connection-item">
+          <span class="conn-dot" style="background:#e879f9;"></span>
+          <div>
+            <div class="conn-name">Chapter 17: OpenGL</div>
+            <div class="conn-desc">The actual API used to implement this pipeline</div>
+          </div>
+        </a>
+      </div>
+
+      <div class="sidebar-card">
+        <h4>Key Terms</h4>
+        <ul>
+          <li><a href="#">Image-order rendering</a></li>
+          <li><a href="#">Object-order rendering</a></li>
+          <li><a href="#">Graphics API</a></li>
+          <li><a href="#">OpenGL 3.3 Core</a></li>
+        </ul>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<footer><div class="page-wrapper">COS344 Computer Graphics · Chapter 1</div></footer>
+<script>
+(function(){
+  var btn = document.querySelector(".nav-toggle");
+  var menu = document.querySelector(".nav-links");
+  if(btn && menu){
+    btn.addEventListener("click", function(){
+      var open = menu.classList.toggle("open");
+      btn.classList.toggle("open", open);
+      btn.setAttribute("aria-expanded", open);
+    });
+  }
+})();
+</script>
+</body>
+</html>
