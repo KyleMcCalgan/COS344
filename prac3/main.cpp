@@ -1,79 +1,77 @@
-#include <stdio.h>
-#include <stdlib.h>
 #include <iostream>
-#include <vector>
-#include <thread>
-#include <random>
-#include <chrono> 
-
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
-#include <glm/glm.hpp>
 
 #include "shader.hpp"
+#include "src/Input.hpp"
+#include "src/Scene.hpp"
 
-using namespace glm;
 using namespace std;
 
-const char *getError()
+static const char *getError()
 {
-    const char *errorDescription;
-    glfwGetError(&errorDescription);
-    return errorDescription;
+    const char *msg;
+    glfwGetError(&msg);
+    return msg;
 }
 
-inline void startUpGLFW()
+static GLFWwindow *createWindow()
 {
-    glewExperimental = true; // Needed for core profile
-    if (!glfwInit())
-    {
-        throw getError();
-    }
-}
+    glewExperimental = true;
+    if (!glfwInit()) throw getError();
 
-inline void startUpGLEW()
-{
-    glewExperimental = true; // Needed in core profile
-    if (glewInit() != GLEW_OK)
-    {
-        glfwTerminate();
-        throw getError();
-    }
-}
-
-inline GLFWwindow *setUp()
-{
-    startUpGLFW();
-    glfwWindowHint(GLFW_SAMPLES, 4);               // 4x antialiasing
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3); // We want OpenGL 3.3
+    glfwWindowHint(GLFW_SAMPLES, 4);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);           // To make MacOS happy; should not be needed
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE); // We don't want the old OpenGL
-    GLFWwindow *window;                                            // (In the accompanying source code, this variable is global for simplicity)
-    window = glfwCreateWindow(1000, 1000, "Experiment", NULL, NULL);
-    if (window == NULL)
-    {
-        cout << getError() << endl;
-        glfwTerminate();
-        throw "Failed to open GLFW window. If you have an Intel GPU, they are not 3.3 compatible. Try the 2.1 version of the tutorials.\n";
-    }
-    glfwMakeContextCurrent(window); // Initialize GLEW
-    startUpGLEW();
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
+    GLFWwindow *window = glfwCreateWindow(1000, 1000, "u24648826", NULL, NULL);
+    if (!window) { glfwTerminate(); throw getError(); }
+
+    glfwMakeContextCurrent(window);
+
+    glewExperimental = true;
+    if (glewInit() != GLEW_OK) { glfwTerminate(); throw getError(); }
+
     return window;
 }
 
 int main()
 {
     GLFWwindow *window;
-    try
+    try { window = createWindow(); }
+    catch (const char *e) { cout << e << endl; return 1; }
+
+    glEnable(GL_DEPTH_TEST);
+    glClearColor(0.53f, 0.81f, 0.98f, 1.0f); // sky blue
+
+    GLuint shader = LoadShaders("VertexShader.glsl", "FragmentShader.glsl");
+
+    InputState input;
+    registerInput(window, input);
+
+    Scene scene;
+    scene.build();
+
+    double prevTime = glfwGetTime();
+
+    while (!glfwWindowShouldClose(window))
     {
-        window = setUp();
-    }
-    catch (const char *e)
-    {
-        cout << e << endl;
-        throw;
+        double now = glfwGetTime();
+        float  dt  = static_cast<float>(now - prevTime);
+        prevTime   = now;
+
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glUseProgram(shader);
+
+        scene.draw(shader, input, dt);
+
+        glfwSwapBuffers(window);
+        glfwPollEvents();
     }
 
-    //Add code here
+    glDeleteProgram(shader);
+    glfwTerminate();
+    return 0;
 }

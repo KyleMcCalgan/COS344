@@ -31,7 +31,8 @@ project/
 │   ├── PROGRESS.md         ← session-by-session progress log
 │   ├── SHAPES.md           ← catalogue of every shape built, its vertices, colours
 │   ├── SHADERS.md          ← vertex & fragment shader design notes
-│   └── REFERENCE.md        ← windmill reference photo notes & planning
+│   ├── REFERENCE.md        ← windmill reference photo notes & planning
+│   └── LAYOUT.md           ← definitive scene layout: top-down + front view, all dimensions
 ├── main.cpp                ← entry point (provided template)
 ├── shader.cpp              ← shader loader (provided, do not modify)
 ├── shader.hpp              ← shader header (provided, do not modify)
@@ -68,9 +69,9 @@ g++ -g Shader.cpp $(files) main.cpp glad.c -lglfw3 -pthread -lGLEW -ldl -lGL -o 
 | Realistic | Must resemble the chosen real-world mini-golf windmill reference photo |
 | Ball gap | There must be a gap through which the golf ball can pass |
 | Attached to course | The windmill must sit on / be attached to the course geometry |
-| Rotor blades | At least **4 blades** on the rotor |
+| Rotor blades | At least **4 blades** on the rotor; each blade has a triangular prism tip |
 
-> **TODO:** Choose a real-world mini-golf windmill reference photo. Document it in `CLAUDE/REFERENCE.md`. The render must look like it. You will need to show this photo at the demo.
+> Reference photo chosen: `windmill.jpg`. See `CLAUDE/REFERENCE.md` for full shape mapping and `CLAUDE/LAYOUT.md` for all dimensions.
 
 ### 4.2 Course Requirements (14 marks)
 
@@ -252,25 +253,67 @@ Extend the `files =` variable with any new `.cpp` files. Do not change the compi
 
 ## 9. CLAUDE Folder — Session Memory System
 
-The `/CLAUDE/` folder acts as persistent memory across Claude Code sessions. At the **end of every session**, the relevant documents must be updated.
+The `/CLAUDE/` folder is the persistent memory for this project across all Claude Code sessions.
+It must be kept up to date. Stale memory is worse than no memory — if a file says something is
+not started and it is actually done, the next session will waste time redoing it.
 
-| File | Purpose |
-|---|---|
-| `CLAUDE/DECISIONS.md` | Log of every significant architecture or design decision with rationale |
-| `CLAUDE/PROGRESS.md` | Session-by-session log: what was done, what works, what is broken, what is next |
-| `CLAUDE/SHAPES.md` | Living catalogue of every 3D shape implemented: name, vertex data approach, colour, which file it lives in |
-| `CLAUDE/SHADERS.md` | Shader design: what uniforms exist, what the vertex/fragment shaders do, how transformations are passed in |
-| `CLAUDE/REFERENCE.md` | Windmill reference photo details, planning notes, shape-to-real-world mapping |
+### File Index
 
-### Session Start Protocol
-1. Read `CLAUDE.md` (this file).
-2. Read `CLAUDE/PROGRESS.md` to understand where things were left off.
-3. Read any other CLAUDE docs relevant to the session's task.
-4. Proceed with implementation.
+| File | Purpose | Update trigger |
+|---|---|---|
+| `CLAUDE/DECISIONS.md` | Every significant architecture or design decision with rationale | Any time a non-trivial implementation choice is made |
+| `CLAUDE/PROGRESS.md` | Session-by-session log: what was done, what works, what is broken, what is next | Every session, no exceptions |
+| `CLAUDE/SHAPES.md` | Living catalogue of every 3D shape: name, vertex approach, colour, file, status | Any time a shape is added, modified, or its status changes |
+| `CLAUDE/SHADERS.md` | Shader design: uniforms, GLSL logic, matrix pipeline, wireframe approach | Any time shaders or the uniform interface changes |
+| `CLAUDE/REFERENCE.md` | Windmill reference photo, shape-to-primitive mapping, colour palette, rotor/gap notes | If any visual design decision changes |
+| `CLAUDE/LAYOUT.md` | Definitive scene layout: top-down + front view, all world-unit dimensions, build order | If any spatial layout decision changes |
 
-### Session End Protocol
-1. Update `CLAUDE/PROGRESS.md` with what was done this session, current status, and what to do next.
-2. Update `CLAUDE/SHAPES.md` if any shapes were added or changed.
-3. Update `CLAUDE/DECISIONS.md` if any architectural decisions were made.
-4. Update `CLAUDE/SHADERS.md` if shaders were modified.
-5. Update `CLAUDE/REFERENCE.md` if the windmill reference was chosen or planning was done.
+### Session Start Protocol — follow this every single session, in order
+
+1. Read `CLAUDE.md` (this file) in full.
+2. Read `CLAUDE/PROGRESS.md` — understand exactly where the last session ended and what is broken.
+3. Read `CLAUDE/LAYOUT.md` — refresh the spatial layout before touching any geometry.
+4. Read `CLAUDE/SHAPES.md` — know which shapes exist and which are pending.
+5. Read any other CLAUDE docs relevant to the session's specific task (e.g. `SHADERS.md` if working on shaders).
+6. Only then begin implementation.
+
+### Session End Protocol — non-negotiable, every session
+
+Before ending any session, update every file that was touched or affected:
+
+1. **`CLAUDE/PROGRESS.md`** — always. Add a new session block with:
+   - Date
+   - What was implemented this session
+   - Current status of every area (use the status table)
+   - Any bugs found, even if not yet fixed
+   - Exact next steps for the following session
+
+2. **`CLAUDE/SHAPES.md`** — if any shape was started, completed, or changed:
+   - Add a new entry using the template, or update the status of an existing one
+   - Keep the shape count summary table accurate
+
+3. **`CLAUDE/DECISIONS.md`** — if any non-trivial implementation choice was made:
+   - Add a new DEC-XXX entry with the decision, rationale, and impact
+   - Include things like: how a shape's gap was implemented, which axis the rotor spins on,
+     how wireframe indices are stored, how the MVP is constructed
+
+4. **`CLAUDE/SHADERS.md`** — if shaders or uniforms were modified:
+   - Update the uniform table
+   - Update the matrix pipeline description
+   - Note any GLSL changes
+
+5. **`CLAUDE/LAYOUT.md`** — if any spatial or dimensional decision was revised:
+   - Update the affected dimension table or section
+   - Note what changed and why at the bottom of the file
+
+6. **`CLAUDE/REFERENCE.md`** — if any visual or colour decision was changed:
+   - Update the shape mapping table or colour palette
+
+### Rules for keeping memory accurate
+
+- **Never mark something as done unless it compiles and renders correctly.**
+- **Never leave a session without updating PROGRESS.md.** Even a 2-line note is better than nothing.
+- **If a dimension in LAYOUT.md changes during implementation, update LAYOUT.md immediately** — do not let the document drift from the actual code.
+- **SHAPES.md is the single source of truth for shape count.** The submission checklist requires 20+ shapes; SHAPES.md must reflect the real count at all times.
+- **If a decision contradicts an earlier decision in DECISIONS.md, add a new entry** explaining the change — do not silently edit old entries.
+

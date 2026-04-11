@@ -113,14 +113,31 @@ MVP (rotor)      = Projection * View * SceneModel * RotorLocal
 
 ---
 
+## Actual Shader Implementation (Session 1)
+
+**VertexShader.glsl:**
+- `layout(location=0) in vec3 aPos` — vertex position
+- `layout(location=1) in vec3 aColor` — per-vertex colour
+- `uniform mat4 MVP` — full transform (proj * view * model)
+- Passes colour through as `out vec3 fragColor`
+
+**FragmentShader.glsl:**
+- `in vec3 fragColor` from vertex shader
+- `out vec4 outColor = vec4(fragColor, 1.0)`
+
+**VBO layout:** interleaved `[x,y,z,r,g,b]` per vertex, stride = 6 floats.
+
+**Uniform:** `MVP` (mat4) — rebuilt every frame, passed column-major via `mat4ToArray()`.
+
 ## Shader Status
 
 | Item | Status |
 |---|---|
-| VertexShader.glsl created | ⬜ Not started |
-| FragmentShader.glsl created | ⬜ Not started |
-| Uniforms wired up in C++ | ⬜ Not started |
-| Projection matrix implemented | ⬜ Not started |
-| View matrix implemented | ⬜ Not started |
-| Scene model matrix implemented | ⬜ Not started |
+| VertexShader.glsl created | ✅ Done |
+| FragmentShader.glsl created | ✅ Done |
+| MVP uniform wired up in C++ | ✅ Done |
+| Projection matrix implemented | ✅ Done (perspective in math3d.hpp) |
+| View matrix implemented | ✅ Done (lookAt in math3d.hpp) |
+| Scene model matrix (T*Rx*Ry*Rz) | ✅ Done |
 | Rotor local matrix implemented | ⬜ Not started |
+| Wireframe GL_LINES support | ⬜ Not started |
