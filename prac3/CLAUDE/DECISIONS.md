@@ -91,4 +91,34 @@ with the rationale behind it. Update this at the end of any session where a deci
 **Decision:** A large flat green cuboid (ground plane) will be placed below the course, extending beyond the boundary walls, at a Y level that the trees and flowers sit on. The course itself will appear elevated above it once the slope is added.
 **Rationale:** Trees currently sit at Y=0 with no ground reference. A ground plane gives context and avoids the floating appearance.
 
+### DEC-014 — Smooth ramp via buildRamp + buildRampWall
+**Date:** Session 3
+**Decision:** The approach channel is a single smooth `buildRamp` quad (not stepped cuboids). The side boundary walls are solid `buildRampWall` shapes with all 6 faces, so they render correctly from any angle. Both bottom out at the ground plane (Y=-0.85) for a solid supported look.
+**Rationale:** Stepped cuboids looked bad. A single quad ramp is mathematically correct and visually clean. The `buildRampWall` was added because `buildRamp` only emits one face — rendering from the side or below showed missing geometry.
+**Impact:** Two new shape builders in shapes.hpp: `buildRamp` and `buildRampWall`. Channel walls no longer use `buildCuboid`.
+
+### DEC-015 — All boundary walls extend to ground plane
+**Date:** Session 3
+**Decision:** Every boundary wall (channel sides, wide area sides, caps, junction steps) has its bottom at Y=-0.85 (ground plane) rather than sitting just below the course surface. Top stays at surface + 0.4.
+**Rationale:** Gives the whole course a solid, supported appearance as if it's a raised structure sitting on the grass. South cap wall height is individually tuned to match the ramp surface Y at Z=3.5 (-0.6), not the flat area Y (0.0).
+**Impact:** All flat wall cuboids use fullHY=0.625, fullCY=-0.225. South cap uses custom values.
+
+### DEC-016 — Golf hole scrapped, to be redesigned
+**Date:** Session 3
+**Decision:** The `buildGolfHole` annular ring approach was removed from Scene.cpp. The function remains in shapes.hpp. Will be redesigned as a simpler visible dark cylinder sitting in the wide putting area.
+**Rationale:** The annular ring rendered poorly and the student disliked it. A clean dark cylinder is simpler, clearly satisfies the spec, and is easy to implement.
+**Impact:** Golf hole is currently absent. Still needed for spec compliance (cylinder count + hole requirement).
+
+### DEC-017 — HUD via separate shader + linefont.h from prac2
+**Date:** Session 3
+**Decision:** HUD uses a dedicated 2D shader pair (HUDVertex.glsl / HUDFragment.glsl) and the linefont.h from prac2, ported to src/. Draws after the 3D scene with depth test disabled. Shows wireframe mode, rotor speed, and controls.
+**Rationale:** linefont.h already existed and was tested in prac2. The 2D mat3 shader is incompatible with the 3D MVP shader so a separate program is required. Confirmed working.
+**Impact:** src/HUD.hpp, src/HUD.cpp, HUDVertex.glsl, HUDFragment.glsl added. src/HUD.cpp added to makefile files=.
+
+### DEC-018 — Golf ball as UV-sphere
+**Date:** Session 3
+**Decision:** `buildSphere` generates a UV-sphere via stacks × slices, placed on the starting mat at Y=-0.50 (mat top -0.60 + radius 0.10). stacks=10, slices=16.
+**Rationale:** Satisfies bonus mark for 3D spherical golf ball. Confirmed rendering correctly.
+**Impact:** buildSphere added to shapes.hpp.
+
 <!-- Add new decisions below this line -->

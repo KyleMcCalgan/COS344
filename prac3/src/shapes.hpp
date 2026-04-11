@@ -332,134 +332,202 @@ inline void buildYCylinder(float cx, float cy, float cz,
     }
 }
 
-// ─── Shape: Golf hole ────────────────────────────────────────────────────────
-// Builds two meshes into the provided buffers:
+
+// ─── Shape: Inclined ramp (smooth quad surface) ──────────────────────────────
+// A flat parallelogram-shaped surface for the approach channel slope.
+// The four corners are given explicitly so any inclination is possible.
+// Winding: viewed from above, corners go counter-clockwise so the top face is lit.
 //
-//  surfTris/surfLines — annular green ring on the ground surface. Connects
-//    a square outer boundary (halfSq x halfSq) down to the circular hole
-//    edge (radius), completely filling the surface with triangles so there
-//    are no gaps between the square green strips and the round opening.
+//   (x0, yN, zN) ─────── (x1, yN, zN)    ← north edge (high)
+//        |                     |
+//   (x0, yS, zS) ─────── (x1, yS, zS)    ← south edge (low)
 //
-//  wallTris/wallLines — open-top cylinder going from surfaceY down to
-//    (surfaceY - depth), coloured slightly darker to give depth illusion.
-//
-// cx,cz    — hole centre (XZ)
-// surfaceY — Y of the green surface (top of the green slab)
-// radius   — hole radius
-// halfSq   — half-side of the surrounding square patch (should match the
-//            gap left in the surrounding green strips)
-// depth    — how far down the hole goes
-// segs     — circle segments (>=12 recommended)
-// gR,gG,gB — surface ring colour (match the green)
-// wallR/G/B — cylinder side wall colour (light grey)
-// floorR/G/B — bottom disc colour (dark grey)
-inline void buildGolfHole(float cx, float cz,
-                           float surfaceY, float radius, float halfSq,
-                           float depth, int segs,
-                           float gR, float gG, float gB,
-                           float wallR, float wallG, float wallB,
-                           float floorR, float floorG, float floorB,
-                           std::vector<float>& surfTris,
-                           std::vector<float>& surfLines,
-                           std::vector<float>& wallTris,
-                           std::vector<float>& wallLines)
+// Also emits left/right/front/back edge lines for wireframe.
+inline void buildRamp(float x0, float x1,          // west / east X
+                      float yN, float zN,            // north-edge Y and Z
+                      float yS, float zS,            // south-edge Y and Z
+                      float r, float g, float b,
+                      std::vector<float>& tris,
+                      std::vector<float>& lines)
 {
-    // ── Surface annular ring ──────────────────────────────────────────────────
-    // For each circle segment i we have:
-    //   inner[i] — point on the circle edge at angle i
-    //   outer[i] — point on the square boundary at the same angle
-    //
-    // We build quads inner[i]→inner[i+1]→outer[i+1]→outer[i], split into
-    // two triangles, for each of the segs segments.
+    std::vector<float> vp;
+    // 0: SW (x0, yS, zS)   1: SE (x1, yS, zS)
+    // 2: NE (x1, yN, zN)   3: NW (x0, yN, zN)
+    pushV(vp, x0, yS, zS, r, g, b); // 0
+    pushV(vp, x1, yS, zS, r, g, b); // 1
+    pushV(vp, x1, yN, zN, r, g, b); // 2
+    pushV(vp, x0, yN, zN, r, g, b); // 3
 
-    // Helper: given an angle, return the point on the axis-aligned square
-    // boundary of half-size halfSq centred at (cx, cz) in the XZ plane.
-    auto squarePt = [&](float angle) -> std::pair<float,float>
-    {
-        float dx = std::cos(angle);
-        float dz = std::sin(angle);
-        // Scale factor to reach the square boundary from the origin
-        float absDx = std::fabs(dx), absDz = std::fabs(dz);
-        float t = halfSq / (absDx > absDz ? absDx : absDz);
-        return { cx + dx * t, cz + dz * t };
-    };
+    // Two triangles, top face
+    pushTri(tris, vp, 0, 1, 2);
+    pushTri(tris, vp, 0, 2, 3);
 
-    // Build vertex pool: segs inner + segs outer
-    std::vector<float> svp;
-    for (int i = 0; i < segs; i++)
+    // Four edge lines
+    pushLine(lines, vp, 0, 1); // south edge
+    pushLine(lines, vp, 1, 2); // east edge
+    pushLine(lines, vp, 2, 3); // north edge
+    pushLine(lines, vp, 3, 0); // west edge
+    // diagonal
+    pushLine(lines, vp, 0, 2);
+}
+
+// ─── Shape: Sloped wall (solid, all faces) ───────────────────────────────────
+// A solid wall whose top and bottom faces are inclined along Z.
+// Think of it as a cuboid where the four Y corners are individually specified.
+//
+//  xInner, xOuter — X extents of the wall (e.g. -0.9 and -0.7 for west wall)
+//  yTopN,  yTopS  — Y of the top face at the north (Z=zN) and south (Z=zS) ends
+//  yBotN,  yBotS  — Y of the bottom face at the north and south ends
+//  zN, zS         — Z of the north and south ends
+//
+// 8 vertices:
+//   0: inner-bottom-south   1: outer-bottom-south
+//   2: outer-bottom-north   3: inner-bottom-north
+//   4: inner-top-south      5: outer-top-south
+//   6: outer-top-north      7: inner-top-north
+inline void buildRampWall(float xInner, float xOuter,
+                          float yTopN,  float yTopS,
+                          float yBotN,  float yBotS,
+                          float zN,     float zS,
+                          float r, float g, float b,
+                          std::vector<float>& tris,
+                          std::vector<float>& lines)
+{
+    std::vector<float> vp;
+    pushV(vp, xInner, yBotS, zS, r, g, b); // 0
+    pushV(vp, xOuter, yBotS, zS, r, g, b); // 1
+    pushV(vp, xOuter, yBotN, zN, r, g, b); // 2
+    pushV(vp, xInner, yBotN, zN, r, g, b); // 3
+    pushV(vp, xInner, yTopS, zS, r, g, b); // 4
+    pushV(vp, xOuter, yTopS, zS, r, g, b); // 5
+    pushV(vp, xOuter, yTopN, zN, r, g, b); // 6
+    pushV(vp, xInner, yTopN, zN, r, g, b); // 7
+
+    // Top face (sloped)
+    pushTri(tris, vp, 4, 7, 6);
+    pushTri(tris, vp, 4, 6, 5);
+    // Bottom face (sloped)
+    pushTri(tris, vp, 0, 1, 2);
+    pushTri(tris, vp, 0, 2, 3);
+    // Inner face (toward channel)
+    pushTri(tris, vp, 0, 3, 7);
+    pushTri(tris, vp, 0, 7, 4);
+    // Outer face (away from channel)
+    pushTri(tris, vp, 1, 5, 6);
+    pushTri(tris, vp, 1, 6, 2);
+    // South end cap
+    pushTri(tris, vp, 0, 4, 5);
+    pushTri(tris, vp, 0, 5, 1);
+    // North end cap
+    pushTri(tris, vp, 3, 2, 6);
+    pushTri(tris, vp, 3, 6, 7);
+
+    // Wireframe edges
+    // Bottom rect
+    pushLine(lines, vp, 0, 1); pushLine(lines, vp, 1, 2);
+    pushLine(lines, vp, 2, 3); pushLine(lines, vp, 3, 0);
+    // Top rect
+    pushLine(lines, vp, 4, 5); pushLine(lines, vp, 5, 6);
+    pushLine(lines, vp, 6, 7); pushLine(lines, vp, 7, 4);
+    // Verticals
+    pushLine(lines, vp, 0, 4); pushLine(lines, vp, 1, 5);
+    pushLine(lines, vp, 2, 6); pushLine(lines, vp, 3, 7);
+}
+
+// ─── Shape: UV-Sphere ────────────────────────────────────────────────────────
+// Standard UV-sphere centred at (cx,cy,cz), radius r.
+// stacks: latitudinal divisions, slices: longitudinal divisions (both >= 4).
+inline void buildSphere(float cx, float cy, float cz,
+                        float radius, int stacks, int slices,
+                        float r, float g, float b,
+                        std::vector<float>& tris,
+                        std::vector<float>& lines)
+{
+    // Generate vertex pool: (stacks+1) rings × (slices+1) verts + shared poles
+    // Indexed: row*( slices+1) + col
+    std::vector<float> vp;
+    int ringCount  = stacks + 1;
+    int ringVerts  = slices + 1;
+
+    for (int i = 0; i <= stacks; i++)
     {
-        float angle = 2.0f * PI * i / segs;
-        float ix = cx + radius * std::cos(angle);
-        float iz = cz + radius * std::sin(angle);
-        pushV(svp, ix, surfaceY, iz, gR, gG, gB); // inner ring: 0..segs-1
+        float phi = PI * i / stacks;          // 0 (top) .. PI (bottom)
+        float sinP = std::sin(phi);
+        float cosP = std::cos(phi);
+        for (int j = 0; j <= slices; j++)
+        {
+            float theta = 2.0f * PI * j / slices;
+            float dx = sinP * std::cos(theta);
+            float dy = cosP;
+            float dz = sinP * std::sin(theta);
+            pushV(vp, cx + radius*dx, cy + radius*dy, cz + radius*dz, r, g, b);
+        }
     }
-    for (int i = 0; i < segs; i++)
+
+    for (int i = 0; i < stacks; i++)
     {
-        float angle = 2.0f * PI * i / segs;
-        auto [ox, oz] = squarePt(angle);
-        pushV(svp, ox, surfaceY, oz, gR, gG, gB); // outer ring: segs..2*segs-1
+        for (int j = 0; j < slices; j++)
+        {
+            int v0 = i       * ringVerts + j;
+            int v1 = i       * ringVerts + j + 1;
+            int v2 = (i + 1) * ringVerts + j;
+            int v3 = (i + 1) * ringVerts + j + 1;
+
+            pushTri(tris, vp, v0, v2, v3);
+            pushTri(tris, vp, v0, v3, v1);
+
+            if (j % 2 == 0)
+            {
+                pushLine(lines, vp, v0, v1);
+                pushLine(lines, vp, v0, v2);
+            }
+        }
+    }
+}
+
+// ─── Shape: Flower (disc of petals on a cylinder stem) ───────────────────────
+// Builds a simple flower: thin Y-cylinder stem + small cone petals arranged
+// in a ring at the top of the stem.
+// cx,cz       — XZ base position (stem bottom)
+// baseY       — Y at ground level
+// stemH       — height of stem
+// stemR       — stem radius
+// numPetals   — how many cone petals to arrange (>=4)
+// petalR      — radius of each petal cone
+// petalH      — height of each petal cone
+// petalOffset — radial distance from stem centre to each petal centre
+inline void buildFlower(float cx, float cz, float baseY,
+                        float stemH, float stemR,
+                        int numPetals, float petalR, float petalH,
+                        float petalOffset,
+                        std::vector<float>& tris,
+                        std::vector<float>& lines)
+{
+    // Stem — light green thin cylinder, Y-axis
+    buildYCylinder(cx, baseY + stemH * 0.5f, cz,
+                   stemR, stemH * 0.5f, 8,
+                   0.30f, 0.65f, 0.20f,
+                   tris, lines);
+
+    // Petals — small cones arranged in a ring at the top of the stem
+    float topY = baseY + stemH;
+    for (int i = 0; i < numPetals; i++)
+    {
+        float angle = 2.0f * PI * i / numPetals;
+        float px = cx + petalOffset * std::cos(angle);
+        float pz = cz + petalOffset * std::sin(angle);
+        buildCone(px, pz,
+                  topY, topY + petalH,
+                  petalR, 8,
+                  0.98f, 0.40f, 0.60f,   // pink petals
+                  tris, lines);
     }
 
-    // Quad strip between inner and outer rings
-    for (int i = 0; i < segs; i++)
-    {
-        int i0 = i,              i1 = (i+1) % segs;   // inner
-        int o0 = segs + i,       o1 = segs + (i+1)%segs; // outer
-
-        // Two triangles per quad
-        pushTri(surfTris, svp, i0, o0, o1);
-        pushTri(surfTris, svp, i0, o1, i1);
-
-        // Lines: inner edge, outer edge, one radial per segment
-        pushLine(surfLines, svp, i0, i1);
-        pushLine(surfLines, svp, o0, o1);
-        pushLine(surfLines, svp, i0, o0);
-    }
-
-    // ── Hole: open side-wall cylinder (light grey) ───────────────────────────
-    // Start the cylinder just below the surface so the green annular ring
-    // sits on top of it and the dark floor is visible when looking down.
-    float yTop = surfaceY - 0.01f;
-    float yBot = surfaceY - depth;
-
-    // Top ring (0..segs-1) and bottom ring (segs..2*segs-1), wall colour
-    std::vector<float> wvp;
-    for (int i = 0; i < segs; i++)
-    {
-        float angle = 2.0f * PI * i / segs;
-        float dx = radius * std::cos(angle);
-        float dz = radius * std::sin(angle);
-        pushV(wvp, cx+dx, yTop, cz+dz, wallR, wallG, wallB);
-        pushV(wvp, cx+dx, yBot, cz+dz, wallR, wallG, wallB);
-    }
-
-    // Side quads only — no top or bottom cap on this mesh
-    for (int i = 0; i < segs; i++)
-    {
-        int t0 = i,      t1 = (i+1)%segs;
-        int b0 = segs+i, b1 = segs+(i+1)%segs;
-        pushTri(wallTris, wvp, t0, b0, b1);
-        pushTri(wallTris, wvp, t0, b1, t1);
-        pushLine(wallLines, wvp, t0, t1);
-        pushLine(wallLines, wvp, b0, b1);
-        if (i%2==0) pushLine(wallLines, wvp, t0, b0);
-    }
-
-    // ── Hole: bottom disc (dark grey) ────────────────────────────────────────
-    std::vector<float> fvp;
-    pushV(fvp, cx, yBot, cz, floorR, floorG, floorB); // centre: 0
-    for (int i = 0; i < segs; i++)
-    {
-        float angle = 2.0f * PI * i / segs;
-        pushV(fvp, cx + radius*std::cos(angle), yBot,
-                   cz + radius*std::sin(angle), floorR, floorG, floorB);
-    }
-    for (int i = 0; i < segs; i++)
-    {
-        int a = 1+i, b2 = 1+(i+1)%segs;
-        pushTri(wallTris, fvp, 0, a, b2);
-        pushLine(wallLines, fvp, a, b2);
-    }
+    // Yellow centre disc on top of stem — small flat cylinder
+    buildYCylinder(cx, topY + 0.01f, cz,
+                   petalOffset * 0.6f, 0.015f, 8,
+                   1.0f, 0.85f, 0.10f,   // yellow
+                   tris, lines);
 }
 
 // ─── Shape: Tree (cone on a cylinder) ────────────────────────────────────────

@@ -5,6 +5,7 @@
 #include "shader.hpp"
 #include "src/Input.hpp"
 #include "src/Scene.hpp"
+#include "src/HUD.hpp"
 
 using namespace std;
 
@@ -54,6 +55,9 @@ int main()
     Scene scene;
     scene.build();
 
+    HUD hud;
+    hud.init();
+
     double prevTime = glfwGetTime();
 
     while (!glfwWindowShouldClose(window))
@@ -66,6 +70,10 @@ int main()
         glUseProgram(shader);
 
         scene.draw(shader, input, dt);
+
+        int winW, winH;
+        glfwGetFramebufferSize(window, &winW, &winH);
+        hud.draw(input, winW, winH);
 
         glfwSwapBuffers(window);
         glfwPollEvents();

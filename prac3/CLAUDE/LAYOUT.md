@@ -247,27 +247,28 @@ The course surface is a single flat green cuboid slab. From the front, the viewe
 Because the course is an irregular L/T shape (not a simple rectangle), it is built from
 **two separate green cuboid slabs** joined at the junction:
 
-| Slab | Width (X) | Depth (Z) | Height (Y) | Position |
-|---|---|---|---|---|
-| Channel slab | 1.4 | 3.5 | 0.1 | Z centre = +1.75 (south of origin) |
-| Wide area slab | 4.0 | 3.5 | 0.1 | Z centre = -1.75 (north of origin) |
-
-Both slabs sit at Y=-0.1 to Y=0.0 (ground level, top face is at Y=0).
+| Slab | Width (X) | Depth (Z) | Notes |
+|---|---|---|---|
+| Channel ramp | 1.4 (X=-0.7..+0.7) | 3.5 (Z=0..+3.5) | Single smooth quad, Y=0 at north, Y=-0.6 at south |
+| Wide area slab | 4.0 (hx=2.0) | 3.5 (hz=1.75) | Flat cuboid, centre Z=-1.75, top at Y=0 |
+| Ground plane | 12.0 (hx=6.0) | 11.0 (hz=5.5) | Flat cuboid at Y=-0.88, extends beyond all walls |
 
 ### Boundary Walls (front view, all red cuboids)
 
 All walls are 0.2 units thick and 0.4 units tall (Y=0.0 to Y=0.4).
 
-| Wall segment | Width (X) or Depth (Z) | Notes |
-|---|---|---|
-| South cap | 1.8 wide (X) | Closes south end of channel |
-| West channel wall | 3.5 deep (Z) | Left side of channel |
-| East channel wall | 3.5 deep (Z) | Right side of channel |
-| West junction step | 1.3 wide (X) | Shoulder from channel to wide area (west side) |
-| East junction step | 1.3 wide (X) | Shoulder from channel to wide area (east side) |
-| West wide wall | 3.5 deep (Z) | Left side of wide area |
-| East wide wall | 3.5 deep (Z) | Right side of wide area |
-| North cap | 4.4 wide (X) | Closes north end of wide area |
+| Wall segment | Type | Top Y | Bottom Y | Notes |
+|---|---|---|---|---|
+| South cap | Cuboid | -0.20 | -0.85 | At Z=3.6, matches ramp surface at Z=3.5 |
+| West channel wall | RampWall | 0.4→-0.2 (sloped) | -0.85 (flat) | Solid, all faces, X=-0.9 to -0.7 |
+| East channel wall | RampWall | 0.4→-0.2 (sloped) | -0.85 (flat) | Solid, all faces, X=+0.7 to +0.9 |
+| West junction step | Cuboid | 0.40 | -0.85 | At Z=0.05, X=-1.5 centre |
+| East junction step | Cuboid | 0.40 | -0.85 | At Z=0.05, X=+1.5 centre |
+| West wide wall | Cuboid | 0.40 | -0.85 | X=-2.1, Z=-1.75 centre |
+| East wide wall | Cuboid | 0.40 | -0.85 | X=+2.1, Z=-1.75 centre |
+| North cap | Cuboid | 0.40 | -0.85 | At Z=-3.6 |
+
+All flat walls: halfHY=0.625, centreY=-0.225 (from Y=-0.85 to Y=0.40).
 
 ---
 
