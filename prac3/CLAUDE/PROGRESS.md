@@ -7,7 +7,7 @@ known issues, and what to tackle next. Update this at the end of every session.
 
 ## Current Status
 
-**Overall:** 🔄 In progress — full scene built and rendering. All bonus features except golf hole done.
+**Overall:** ✅ Feature complete — all spec requirements met, all bonus features done. Submission packaging remaining.
 
 | Area | Status |
 |---|---|
@@ -15,7 +15,7 @@ known issues, and what to tackle next. Update this at the end of every session.
 | Matrix math (from P1) | ✅ Done — prac1/Matrix.h + Vector.h via math3d.hpp |
 | Vertex / Fragment shaders | ✅ Done — MVP + per-vertex colour |
 | Camera / projection setup | ✅ Done — perspective + lookAt |
-| Course geometry | ✅ Done — smooth ramp, wide area, all walls extend to ground |
+| Course geometry | ✅ Done — smooth ramp + flat starting platform, wide area, all walls extend to ground |
 | Ground plane | ✅ Done — large green slab at Y=-0.85 |
 | Windmill geometry | ✅ Done — lower/upper tower, blue trim, roof, axle, hub |
 | Rotor & blades | ✅ Done — 4 blades with white spine, 8 red bars, red paddle |
@@ -186,3 +186,21 @@ Rotor axis counts if tutor agrees it qualifies — already horizontal by design.
 1. Submission packaging — zip archive with all files
 2. Final spec compliance check: shape count, colour count, all key bindings
 3. Student to annotate reference photo before demo
+
+### Session 5 — Starting Platform + Final Polish
+**Date:** 2026-04-11
+**What was done:**
+- Added flat green starting platform (Z=3.5..4.2, Y=-0.6) at the south end of the ramp,
+  giving a level surface for the mat and ball.
+- Moved starting mat and golf ball onto the flat platform (Z=3.85) — now fully visible.
+- Added short flat red walls either side of the platform (X=±0.8) to enclose it.
+- Moved south cap wall to Z=4.2 to close off the end of the platform.
+- Fine-tuned mat Y (-0.595) and ball Y (-0.475) so they sit clearly on the platform surface.
+
+**Current issues:**
+- None — scene is feature complete.
+
+**Remaining before submission:**
+1. Submission packaging — zip archive with source, shaders, makefile, windmill.jpg
+2. Student to annotate windmill.jpg before demo (6 marks at risk if missing)
+3. Final keybinding sanity check before submitting

@@ -96,13 +96,26 @@ Notes:    4 rectangles leave square gap (hSq=0.18). 4 corner fans (N=8 triangles
 ```
 
 ```
+ID:       SHAPE-003b
+Name:     Flat starting platform
+Type:     Cuboid
+Part of:  Course
+Colour:   Green (0.18, 0.65, 0.18)
+Position: Centre (0, -0.625, 3.85), half-extents (0.7, 0.025, 0.35)
+Status:   Done
+Notes:    Level extension at south end of ramp (Z=3.5..4.2, Y=-0.6 top).
+          Gives a flat surface for the starting mat and ball.
+```
+
+```
 ID:       SHAPE-004
 Name:     Starting mat
 Type:     Cuboid
 Part of:  Course
 Colour:   Yellow (0.93, 0.83, 0.10)
-Position: Centre (0, -0.62, 3.375), half-extents (0.45, 0.02, 0.25)
+Position: Centre (0, -0.595, 3.85), half-extents (0.45, 0.02, 0.25)
 Status:   Done
+Notes:    Sits on flat starting platform, fully visible above surface.
 ```
 
 ### Boundary Walls
@@ -167,6 +180,17 @@ Part of:  Course
 Colour:   Red (0.78, 0.15, 0.15)
 Position: Centre (0, -0.225, -3.6), half-extents (2.2, 0.625, 0.1)
 Status:   Done
+```
+
+```
+ID:       SHAPE-012b / 012c
+Name:     Starting platform side walls (west + east)
+Type:     Cuboid × 2
+Part of:  Course
+Colour:   Red (0.78, 0.15, 0.15)
+Position: (±0.8, -0.525, 3.85), half-extents (0.1, 0.325, 0.35)
+Status:   Done
+Notes:    Enclose the flat starting platform. South cap wall moved to Z=4.2.
 ```
 
 ### Windmill
@@ -337,8 +361,9 @@ Name:     Golf ball
 Type:     UV-Sphere (stacks=10, slices=16)
 Part of:  Course
 Colour:   Near-white (0.97, 0.97, 0.97)
-Position: Centre (0, -0.50, 3.375), radius=0.10
+Position: Centre (0, -0.475, 3.85), radius=0.10
 Status:   Done — confirmed rendering
+Notes:    Sits on flat starting platform.
 ```
 
 ```

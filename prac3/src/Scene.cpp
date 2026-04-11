@@ -250,16 +250,31 @@ void Scene::build()
                       wR, wG, wB, t, l);
         addMesh(m_entries, t, l);
 
+        // ── Flat extension walls (Z=3.5..4.2) at Y=-0.6 ─────────────────────
+        // Short flat walls either side of the starting platform.
+        float extZ0 = zRS, extZ1 = 4.2f;
+        float extTop = yRS + wallH; // -0.6 + 0.4 = -0.2
+        float extHY = (extTop - gndY) * 0.5f;   // (−0.2 − (−0.85))/2 = 0.325
+        float extCY = (extTop + gndY) * 0.5f;   // (−0.2 + (−0.85))/2 = −0.525
+        float extHZ = (extZ1 - extZ0) * 0.5f;
+        float extCZ = (extZ0 + extZ1) * 0.5f;
+        t.clear(); l.clear();
+        buildCuboid(-0.8f, extCY, extCZ,  0.1f, extHY, extHZ, wR, wG, wB, t, l);
+        addMesh(m_entries, t, l);
+        t.clear(); l.clear();
+        buildCuboid( 0.8f, extCY, extCZ,  0.1f, extHY, extHZ, wR, wG, wB, t, l);
+        addMesh(m_entries, t, l);
+
         // All remaining walls extend from ground plane (Y=-0.85) up to
         // surface + wallH (Y=0.4). Half-height = (0.4-(-0.85))/2 = 0.625,
         // centre Y = (-0.85+0.4)/2 = -0.225.
         float fullHY = 0.625f;
         float fullCY = -0.225f;
 
-        // South cap wall — top matches ramp surface at Z=3.5 (Y=-0.6) + wallH=0.4
+        // South cap wall — at Z=4.2, beyond the flat starting extension.
         // Top Y = -0.2, bottom Y = -0.85, half-height = 0.325, centre Y = -0.525
         t.clear(); l.clear();
-        buildCuboid(0.0f, -0.525f, 3.6f,  0.9f, 0.325f, 0.1f, wR, wG, wB, t, l);
+        buildCuboid(0.0f, -0.525f, 4.2f,  0.7f, 0.325f, 0.1f, wR, wG, wB, t, l);
         addMesh(m_entries, t, l);
 
         // Junction steps
@@ -285,9 +300,18 @@ void Scene::build()
     }
 
 
-    // ── Starting mat (yellow) — sits on south end of ramp (Y = -0.6) ─────────
+    // ── Flat extension at south end of ramp (starting platform) ──────────────
+    // A flat green slab at Y=-0.6, Z=3.5..4.2, same width as channel (X=-0.7..+0.7).
+    // Gives a level surface for the starting mat and ball.
     t.clear(); l.clear();
-    buildCuboid(0.0f, -0.62f, 3.375f,  0.45f, 0.02f, 0.25f,
+    buildCuboid(0.0f, -0.625f, 3.85f,  0.7f, 0.025f, 0.35f,
+                0.18f, 0.65f, 0.18f, t, l);
+    addMesh(m_entries, t, l);
+
+    // ── Starting mat (yellow) — sits on flat extension at Z=3.85 ─────────────
+    // Flat extension top Y = -0.6. Mat half-height=0.02, centre at -0.62.
+    t.clear(); l.clear();
+    buildCuboid(0.0f, -0.595f, 3.85f,  0.45f, 0.02f, 0.25f,
                 0.93f, 0.83f, 0.10f, t, l);
     addMesh(m_entries, t, l);
 
@@ -489,7 +513,7 @@ void Scene::build()
     // ── Golf ball (UV-sphere, white) — sits on starting mat ──────────────────
     // Mat top Y = -0.60. Ball radius = 0.10, so centre Y = -0.60 + 0.10 = -0.50.
     t.clear(); l.clear();
-    buildSphere(0.0f, -0.50f, 3.375f,
+    buildSphere(0.0f, -0.475f, 3.85f,
                 0.10f, 10, 16,
                 0.97f, 0.97f, 0.97f, t, l);
     addMesh(m_entries, t, l);
