@@ -362,13 +362,11 @@ inline void buildRamp(float x0, float x1,          // west / east X
     pushTri(tris, vp, 0, 1, 2);
     pushTri(tris, vp, 0, 2, 3);
 
-    // Four edge lines
+    // Four edge lines only — no diagonal (the shared triangle edge is internal)
     pushLine(lines, vp, 0, 1); // south edge
     pushLine(lines, vp, 1, 2); // east edge
     pushLine(lines, vp, 2, 3); // north edge
     pushLine(lines, vp, 3, 0); // west edge
-    // diagonal
-    pushLine(lines, vp, 0, 2);
 }
 
 // ─── Shape: Sloped wall (solid, all faces) ───────────────────────────────────
