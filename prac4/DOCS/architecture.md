@@ -28,11 +28,11 @@ prac4/
 │   └── fragment_wireframe.glsl (may reuse main fragment shader)
 ├── textures/
 │   ├── colour/
-│   │   └── golf_colour.bmp         (colour/dimple shading map)
+│   │   └── colour.bmp              (colour/dimple shading map)
 │   ├── displacement/
-│   │   └── golf_displacement.bmp   (displacement map)
+│   │   └── displacement.bmp        (displacement map)
 │   └── alpha/
-│       └── golf_alpha.bmp          (alpha/transparency map)
+│       └── alpha.bmp               (alpha/transparency map)
 ├── src/
 │   ├── main.cpp
 │   ├── sphere.h / sphere.cpp

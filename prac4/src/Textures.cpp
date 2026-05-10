@@ -1,9 +1,6 @@
 #include "Textures.hpp"
 
-#include <algorithm>
-#include <dirent.h>
 #include <fstream>
-#include <string>
 #include <vector>
 
 namespace
@@ -21,53 +18,6 @@ unsigned short readLittleEndian16(const unsigned char *data)
     return static_cast<unsigned short>(data[0]) |
            (static_cast<unsigned short>(data[1]) << 8);
 }
-
-bool hasBMPExtension(const std::string &filename)
-{
-    if (filename.size() < 4)
-    {
-        return false;
-    }
-
-    std::string extension = filename.substr(filename.size() - 4);
-    std::transform(extension.begin(), extension.end(), extension.begin(), ::tolower);
-    return extension == ".bmp";
-}
-
-std::string findTextureInDirectory(const char *directoryPath)
-{
-    DIR *directory = opendir(directoryPath);
-    if (directory == 0)
-    {
-        throw "Failed to open texture directory";
-    }
-
-    std::vector<std::string> matches;
-    dirent *entry = 0;
-    while ((entry = readdir(directory)) != 0)
-    {
-        std::string name(entry->d_name);
-        if (name == "." || name == "..")
-        {
-            continue;
-        }
-
-        if (hasBMPExtension(name))
-        {
-            matches.push_back(std::string(directoryPath) + "/" + name);
-        }
-    }
-
-    closedir(directory);
-
-    if (matches.empty())
-    {
-        throw "No BMP texture found in texture directory";
-    }
-
-    std::sort(matches.begin(), matches.end());
-    return matches[0];
-}
 }
 
 TextureSet::TextureSet()
@@ -83,13 +33,9 @@ TextureSet::~TextureSet()
 void TextureSet::loadAll()
 {
     release();
-    const std::string colourPath = findTextureInDirectory("textures/colour");
-    const std::string displacementPath = findTextureInDirectory("textures/displacement");
-    const std::string alphaPath = findTextureInDirectory("textures/alpha");
-
-    m_colourTextureId = loadBMPTexture(colourPath.c_str());
-    m_displacementTextureId = loadBMPTexture(displacementPath.c_str());
-    m_alphaTextureId = loadBMPTexture(alphaPath.c_str());
+    m_colourTextureId = loadBMPTexture("textures/colour/colour.bmp");
+    m_displacementTextureId = loadBMPTexture("textures/displacement/displacement.bmp");
+    m_alphaTextureId = loadBMPTexture("textures/alpha/alpha.bmp");
 }
 
 void TextureSet::bindAll(GLuint shaderProgram) const

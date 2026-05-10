@@ -15,16 +15,15 @@ a small indented circle on the displacement map, and a transparent circle on the
 
 ---
 
-## Creation Strategy: Programmatic BMP Generation
+## Creation Strategy: Manual BMP Creation
 
-The simplest approach that keeps things explainable during the demo is to write a small standalone
-C++ or Python script (outside the main project) that generates the BMP files by computing pixel
-values mathematically. This means:
+Create the three BMP files yourself and place them in the dedicated subfolders:
 
-- No external image editor required.
-- Fully explainable: "I wrote a script that places circles at regular grid positions on the UV map."
-- Produces clean, consistent textures.
-- All three maps share the same circle layout — only the pixel values differ.
+- `textures/colour/colour.bmp`
+- `textures/displacement/displacement.bmp`
+- `textures/alpha/alpha.bmp`
+
+This keeps the runtime loader simple while still letting you fully control the maps you draw.
 
 ### Dimple Layout Algorithm
 
@@ -44,7 +43,7 @@ This is simple to compute and looks convincing.
 
 ---
 
-## Colour Texture Map (`golf_colour.bmp`)
+## Colour Texture Map (`colour.bmp`)
 
 **Purpose:** Makes dimples appear slightly darker than the surrounding surface.
 
@@ -59,7 +58,7 @@ This is simple to compute and looks convincing.
 
 ---
 
-## Displacement Texture Map (`golf_displacement.bmp`)
+## Displacement Texture Map (`displacement.bmp`)
 
 **Purpose:** Actually moves vertices inward at dimple locations to create real surface geometry.
 
@@ -82,7 +81,7 @@ This is simple to compute and looks convincing.
 
 ---
 
-## Alpha Texture Map (`golf_alpha.bmp`)
+## Alpha Texture Map (`alpha.bmp`)
 
 **Purpose:** Makes only the dimple regions transparent while the rest of the ball is fully opaque.
 
@@ -102,7 +101,7 @@ This is simple to compute and looks convincing.
 
 ## Texture Loading (`texture.cpp`)
 
-- Read BMP files from the `textures/` directory tree at startup.
+- Read BMP files from the fixed paths above at startup.
 - Upload to GPU as `GL_TEXTURE_2D` objects.
 - Use `GL_REPEAT` wrapping and `GL_LINEAR` filtering (or `GL_NEAREST` for crisp dimple edges).
 - Bind to texture units 0, 1, 2 for colour, displacement, and alpha respectively.
@@ -128,9 +127,9 @@ uniform bool alphaTexEnabled;
 
 | File | Description |
 |------|-------------|
-| `textures/colour/golf_colour.bmp` | Colour/dimple shading map |
-| `textures/displacement/golf_displacement.bmp` | Surface displacement map |
-| `textures/alpha/golf_alpha.bmp` | Per-dimple alpha/transparency map |
+| `textures/colour/colour.bmp` | Colour/dimple shading map |
+| `textures/displacement/displacement.bmp` | Surface displacement map |
+| `textures/alpha/alpha.bmp` | Per-dimple alpha/transparency map |
 
 ---
 
@@ -141,4 +140,4 @@ uniform bool alphaTexEnabled;
 - [ ] Number of dimples across the texture.
 - [ ] Max displacement amount.
 - [ ] Whether to use smooth gradient edges on dimples.
-- [ ] Whether to write a generation script or manually create BMP files.
+- [ ] Which tool was used to manually create the BMP files.

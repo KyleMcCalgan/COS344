@@ -44,11 +44,11 @@
 | Blending enabled for sphere | ✅ | Sphere draws last with standard alpha blending |
 | Phong point light on floor | ✅ | Fragment-shader point lighting is applied to the floor only |
 | Glass colour × light colour on floor | ✅ | Effective light colour is computed from light colour × golf ball colour |
-| Texture BMP creation script | ✅ | `tools/generate_textures.cpp` creates all three BMP maps |
+| Texture BMP asset workflow | ✅ | Manual 24-bit BMP files are loaded from `textures/colour/colour.bmp`, `textures/displacement/displacement.bmp`, and `textures/alpha/alpha.bmp` |
 | Texture loading (BMP → OpenGL) | ✅ | `TextureSet` loads and binds uncompressed 24-bit BMP textures |
-| Colour texture map (B toggle) | ✅ | Sphere colour is modulated by the generated dimple shading map |
-| Displacement texture map (N toggle) | ✅ | Vertex shader displaces the sphere surface using the generated height map |
-| Alpha texture map (M toggle) | ✅ | Dimple-only transparency is driven by the generated alpha map |
+| Colour texture map (B toggle) | ✅ | Sphere colour is modulated by the manual dimple shading map |
+| Displacement texture map (N toggle) | ✅ | Vertex shader displaces the sphere surface using the manual height map |
+| Alpha texture map (M toggle) | ✅ | Dimple-only transparency is driven by the manual alpha map |
 | Wireframe edge buffer generation | ✅ | Edge pairs are derived from triangle indices for both sphere and plane |
 | Wireframe rendering (GL_LINES) | ✅ | Wireframe uses dedicated edge index buffers and `GL_LINES` |
 | Wireframe colour correct | ✅ | Plane and sphere wireframes use their current object colours |
@@ -118,9 +118,10 @@ Record decisions here as they are made during implementation.
 | Texture resolution | `256 x 256` | Lightweight enough for development while still giving a readable dimple pattern |
 | Dimple layout (regular / hex-offset) | Hex-offset grid | Produces a more golf-ball-like staggered dimple packing |
 | Dimples per row | `14 rows`, `16 columns` | Dense enough to read clearly on the sphere without becoming noisy |
-| Max displacement amount | `0.08` | Makes the dimples visible at moderate subdivision levels |
+| Max displacement amount | `0.03` | Keeps the dimple effect visible without dramatically deforming the sphere |
 | Smooth or hard dimple edges | Smooth | Gives cleaner displacement and alpha transitions |
 | BMP format (24-bit / 32-bit) | 24-bit | Simpler loader and sufficient for all three maps |
+| Texture creation workflow | Manual BMP files | Keeps the submission asset pipeline simple and avoids helper generation tooling |
 
 ### Lighting Decisions
 
