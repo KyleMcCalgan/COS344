@@ -104,26 +104,26 @@ MeshData generateSphereMesh(int subdivisionLevel, float radius)
             if (stack == 0)
             {
                 indexData[indexOffset++] = topLeft;
-                indexData[indexOffset++] = bottomLeft;
                 indexData[indexOffset++] = bottomRight;
+                indexData[indexOffset++] = bottomLeft;
                 continue;
             }
 
             if (stack == stacks - 1)
             {
                 indexData[indexOffset++] = topLeft;
-                indexData[indexOffset++] = bottomLeft;
                 indexData[indexOffset++] = topRight;
+                indexData[indexOffset++] = bottomLeft;
                 continue;
             }
 
             indexData[indexOffset++] = topLeft;
-            indexData[indexOffset++] = bottomLeft;
             indexData[indexOffset++] = topRight;
+            indexData[indexOffset++] = bottomLeft;
 
             indexData[indexOffset++] = topRight;
-            indexData[indexOffset++] = bottomLeft;
             indexData[indexOffset++] = bottomRight;
+            indexData[indexOffset++] = bottomLeft;
         }
     }
 

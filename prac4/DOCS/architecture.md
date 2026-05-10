@@ -1,205 +1,266 @@
 # COS344 Prac 4 — Architecture
 
-> Describes the file structure, module responsibilities, and how data flows through the program.
-> No code here — descriptions only.
+> Describes the actual file structure, module responsibilities, and runtime data flow for the
+> current implementation.
 
 ---
 
 ## File Structure
 
-```
+```text
 prac4/
 ├── DOCS/
 │   ├── index.md
+│   ├── spec.md
 │   ├── rubric.md
 │   ├── progress.md
 │   ├── architecture.md
 │   └── features/
+│       ├── colour.md
+│       ├── lighting.md
 │       ├── shapes.md
 │       ├── textures.md
-│       ├── lighting.md
 │       ├── transformations.md
-│       ├── colour.md
 │       └── wireframe.md
-├── shaders/
-│   ├── vertex.glsl
-│   ├── fragment.glsl
-│   ├── vertex_wireframe.glsl   (may reuse main vertex shader)
-│   └── fragment_wireframe.glsl (may reuse main fragment shader)
 ├── textures/
 │   ├── colour/
-│   │   └── colour.bmp              (colour/dimple shading map)
+│   │   └── colour.bmp
 │   ├── displacement/
-│   │   └── displacement.bmp        (displacement map)
-│   └── alpha/
-│       └── alpha.bmp               (alpha/transparency map)
+│   │   └── displacement.bmp
+│   ├── alpha/
+│   │   └── alpha.bmp
+│   └── generate_bitmaps.py
 ├── src/
-│   ├── main.cpp
-│   ├── sphere.h / sphere.cpp
-│   ├── plane.h / plane.cpp
-│   ├── texture.h / texture.cpp
-│   ├── light.h / light.cpp
-│   ├── math_utils.h / math_utils.cpp   (matrix/vec math from Prac 1)
-│   └── shader.hpp                      (provided)
-├── glad.c                              (provided)
-└── Makefile
+│   ├── App.cpp / App.h
+│   ├── HUD.cpp / HUD.hpp
+│   ├── Input.cpp / Input.hpp
+│   ├── Palette.hpp
+│   ├── Scene.cpp / Scene.hpp
+│   ├── Textures.cpp / Textures.hpp
+│   └── linefont.h
+├── Geometry.cpp / Geometry.h
+├── Mesh.cpp / Mesh.h
+├── Matrix.cpp / Matrix.h
+├── Vector.cpp / Vector.h
+├── math3d.hpp
+├── shader.cpp / shader.hpp
+├── vertex.glsl / fragment.glsl
+├── HUDVertex.glsl / HUDFragment.glsl
+├── main.cpp
+└── makefile
 ```
-
-> All source files sit at the same level or within `src/`. If the marker requires everything flat in
-> root alongside `main.cpp`, the `src/` folder can be collapsed — decide before final submission.
 
 ---
 
 ## Module Responsibilities
 
 ### `main.cpp`
-- Entry point and OpenGL context setup (GLFW window, GLEW init).
-- Window title set to student number.
-- Owns the **render loop**: clear → draw plane → draw sphere → swap buffers.
-- Owns the **keyboard callback** which routes key presses to the correct module functions.
-- Holds top-level scene state: rotation angles, wireframe toggle, which colour indices are active.
-- Calls into sphere, plane, light, and texture modules — does not implement their logic.
+- Minimal entry point only.
+- Calls `runApplication()` and keeps the root file simple.
 
-### `sphere.h / sphere.cpp`
-- Generates sphere vertex/index data based on a configurable subdivision parameter (stacks × slices).
-- Exposes a function to regenerate the mesh when the subdivision level changes.
-- Stores its own VAO and VBO.
-- Exposes a draw function that accepts the current shader program, transformation matrix, and state flags (wireframe mode, which textures are active, current colour, current alpha).
-- Also generates and stores the wireframe index buffer (edge pairs derived from the triangle mesh).
+### `src/App.cpp` / `src/App.h`
+- Creates the GLFW window and OpenGL context.
+- Sets the window title to the student number.
+- Configures core OpenGL state such as depth testing and blending.
+- Owns the high-level application loop:
+  - poll input
+  - update scene geometry if dirty
+  - draw scene
+  - draw HUD
+  - swap buffers
 
-### `plane.h / plane.cpp`
-- Generates a flat grid mesh based on a configurable resolution (N × N quads).
-- Same VAO/VBO/regenerate/draw pattern as the sphere.
-- Exposes current floor colour to be set externally.
-- Also generates wireframe edge indices.
+### `src/Input.cpp` / `src/Input.hpp`
+- Defines the persistent interactive state for the practical.
+- Stores:
+  - sphere subdivision
+  - plane resolution
+  - selected colour target
+  - floor / ball / light colour indices
+  - ball alpha
+  - texture toggles
+  - wireframe toggle
+  - scene rotation angles
+  - local light position
+- Maps keyboard input to state changes.
+- Handles reset behavior and `Enter` debounce.
 
-### `texture.h / texture.cpp`
-- Loads BMP texture files from disk into OpenGL texture objects.
-- Exposes three texture IDs: colour map, displacement map, alpha map.
-- Exposes bind/unbind helpers used before draw calls.
-- Does NOT handle the toggle logic — that lives in `main.cpp` state flags passed to the shader.
+### `src/Scene.cpp` / `src/Scene.hpp`
+- Owns scene setup, geometry rebuilds, and rendering.
+- Keeps the sphere, plane, and light marker meshes.
+- Rebuilds sphere and plane meshes when subdivision values change.
+- Loads and binds textures through `TextureSet`.
+- Computes transforms, light world position, and lighting uniforms.
+- Draws either:
+  - solid scene with textures / lighting, or
+  - wireframe scene using `GL_LINES`
 
-### `light.h / light.cpp`
-- Holds the light's position in local space (starts at sphere centre).
-- Holds the light's current colour.
-- Exposes functions to translate the light along local X, Y, Z.
-- Exposes a function that returns the light position transformed into world space (accounting for scene rotation) — needed for the fragment shader uniform.
+### `src/HUD.cpp` / `src/HUD.hpp`
+- Draws the 2D line-font overlay.
+- Left panel shows the control table.
+- Right panel shows live state:
+  - solid / wireframe mode
+  - selected colour target
+  - alpha value
+  - texture toggle states
+  - current floor / ball / light colours
 
-### `math_utils.h / math_utils.cpp`
-- Ported/reused from Prac 1.
-- Provides: 4×4 matrix struct, matrix multiply, rotation matrices (X/Y/Z), translation matrix, identity matrix, matrix-vector multiply.
-- Provides: vec3/vec4 structs, dot product, cross product, normalise.
-- No GLM math functions used anywhere in the project.
+### `src/Textures.cpp` / `src/Textures.hpp`
+- Loads the three uncompressed 24-bit BMP textures used by the sphere.
+- Expected manual asset paths:
+  - `textures/colour/colour.bmp`
+  - `textures/displacement/displacement.bmp`
+  - `textures/alpha/alpha.bmp`
+- Uploads textures to OpenGL and binds them to texture units `0`, `1`, and `2`.
 
-### `shader.hpp` (provided)
-- Compiles and links vertex + fragment shaders from file paths.
-- Returns a shader program ID.
+### `src/Palette.hpp`
+- Central source of truth for the floor, ball, and light colour palettes.
+- Exposes small helpers to fetch the current colour from the input state.
+
+### `Geometry.cpp` / `Geometry.h`
+- Generates CPU-side mesh data for:
+  - UV sphere
+  - grid plane
+  - light marker mesh
+- Also derives wireframe edge index buffers from triangle indices.
+
+### `Mesh.cpp` / `Mesh.h`
+- Uploads vertex / triangle / edge data to OpenGL buffers.
+- Owns VAO, VBO, solid EBO, and wireframe EBO lifetime.
+- Exposes solid draw and wireframe draw helpers.
+
+### `Matrix.cpp`, `Vector.cpp`, `math3d.hpp`
+- Reused / adapted math support from earlier practical work.
+- Provide vectors, matrices, transforms, and helper operations without GLM.
+
+### `shader.cpp` / `shader.hpp`
+- Provided shader-compilation helper.
+- Compiles and links shader programs from file paths.
+
+### `textures/generate_bitmaps.py`
+- Optional standalone helper to regenerate the three BMP texture assets.
+- Not part of the build system.
+- Uses only Python standard library code and writes manual BMPs directly to the texture folders.
 
 ---
 
 ## Shader Design
 
-### Main Vertex Shader (`vertex.glsl`)
-Responsibilities:
-- Receives position, normal, and UV coordinates per vertex.
-- Applies the combined model-view-projection matrix (passed as a uniform).
-- If displacement is enabled (uniform bool), samples the displacement texture at the UV
-  coordinate and offsets the vertex position along the normal by the displacement amount.
-- Passes UV, world-space position, and world-space normal to the fragment shader as varyings.
+### `vertex.glsl`
+- Receives sphere / plane vertex attributes:
+  - position
+  - normal
+  - UV
+- Applies model, view, and projection transforms.
+- If displacement mapping is enabled, offsets sphere vertices along their normals using the
+  displacement texture.
+- Passes world position, world normal, and UV to the fragment shader.
 
-### Main Fragment Shader (`fragment.glsl`)
-Responsibilities:
-- Receives UV, world-space position, world-space normal.
-- Receives uniforms: light position (world space), light colour, object base colour, alpha value.
-- Receives uniform booleans: colourTexEnabled, alphaTexEnabled (displacement is handled in vertex).
-- Samples colour texture if enabled — modulates base colour with texture colour.
-- Computes Phong point light contribution (for floor fragments) using the light position and colour.
-- Computes final alpha: if alphaTexEnabled, uses alpha texture to decide per-fragment transparency;
-  otherwise uses the uniform alpha value.
-- Outputs `vec4(finalColour, finalAlpha)`.
+### `fragment.glsl`
+- Handles the main solid-render path.
+- Supports:
+  - uniform base object colour
+  - colour texture modulation
+  - alpha texture handling
+  - floor-only point-light shading
+- Uses the effective light colour `lightColour * glassColour` for the floor projection.
+- Leaves the golf ball on a simpler translucent shading path.
 
-### Wireframe Shaders (`vertex_wireframe.glsl`, `fragment_wireframe.glsl`)
-- Simpler — just apply the same MVP transformation.
-- Fragment shader outputs the object's current colour (no lighting, no texture sampling).
-- Can potentially be the same shaders with a uniform flag if keeping file count low.
+### `HUDVertex.glsl` / `HUDFragment.glsl`
+- Lightweight 2D HUD shader pair for the line-font overlay.
+- Used only for screen-space text rendering.
 
 ---
 
 ## Data Flow
 
-```
+```text
 Keyboard Input
     │
     ▼
-main.cpp (scene state)
+InputState (src/Input.cpp)
     │
-    ├──► sphere.cpp ──► VAO/VBO ──► vertex shader (displacement) ──► fragment shader (colour/alpha/light)
+    ├──► Scene rebuild flags
+    ├──► Colour / alpha / texture toggles
+    ├──► Scene rotation angles
+    └──► Local light position
+
+InputState
     │
-    ├──► plane.cpp  ──► VAO/VBO ──► vertex shader ──► fragment shader (light projection + combined colour)
+    ├──► src/Scene.cpp
+    │      ├── rebuild meshes if dirty
+    │      ├── compute transforms
+    │      ├── compute light world position
+    │      ├── bind textures
+    │      └── draw solid or wireframe scene
     │
-    ├──► light.cpp  ──► light position uniform ──► fragment shader
-    │
-    └──► texture.cpp ──► texture units 0/1/2 ──► fragment shader samplers
+    └──► src/HUD.cpp
+           └── draw control guide and current status
 ```
 
 ---
 
-## Scene Coordinate System
+## Scene Layout
 
-- **World origin**: centre of the scene, initially where the sphere sits.
-- **Sphere**: centred at world origin, resting on the plane (so sphere bottom touches plane top).
-- **Plane**: flat, extends in XZ, Y = -(sphere radius).
-- **Light**: starts at world origin (sphere centre). Translated in local coordinates.
-- **Scene rotation**: entire scene (sphere + plane + light) rotated by accumulating rotation matrices
-  applied to the model matrix before uploading to the shader.
-- **Camera**: fixed, looking at the origin from some default position (e.g. slightly elevated and back).
+- The sphere has radius `1.0`.
+- The plane sits at `y = -1.0`, so the sphere rests on it.
+- The light starts at local position `(0, 0, 0)`, which is the sphere centre.
+- The camera is fixed at `(0.0, 1.6, 4.6)` and looks toward `(0.0, -0.15, 0.0)`.
+- Scene rotation is applied to the rendered scene, while the camera remains fixed.
 
 ---
 
-## Rendering Order (for translucency correctness)
+## Render Order
 
-1. Enable depth testing.
-2. Draw **floor (plane)** first — opaque, writes to depth buffer.
-3. Draw **golf ball (sphere)** second — translucent, enable blending, disable depth write (or sort faces).
-4. Draw **wireframe** on top if wireframe mode is active — use same geometry but GL_LINES index buffer.
+### Solid mode
+1. Draw plane.
+2. Draw light marker.
+3. Draw translucent sphere last.
+4. Draw HUD.
 
-> If the BSP bonus is attempted, face sorting replaces the naive back-to-front assumption.
+### Wireframe mode
+1. Draw plane wireframe with `GL_LINES`.
+2. Draw sphere wireframe with `GL_LINES`.
+3. Optionally keep the light marker visible for orientation.
+4. Draw HUD.
 
----
-
-## State Flags (held in main.cpp)
-
-```
-bool wireframeMode          — toggled by Enter
-bool colourTexEnabled       — toggled by B
-bool displacementTexEnabled — toggled by N
-bool alphaTexEnabled        — toggled by M
-
-int  sphereSubdivision      — increased/decreased by chosen keys
-int  planeResolution        — increased/decreased by chosen keys
-
-int  floorColourIndex       — cycles through 10 colours
-int  ballColourIndex        — cycles through 10 colours
-int  lightColourIndex       — cycles through 9 colours
-
-float ballAlpha             — modified by + and -
-
-float sceneRotX, sceneRotY, sceneRotZ   — accumulate rotation angles
-vec3  lightLocalPos                     — light position in local space
-```
+Back-face culling is enabled for the sphere draw to reduce translucent shell artifacts.
 
 ---
 
-## Reset Behaviour (Space key)
+## State Summary
 
-Resets all state flags to their initial values:
-- `sphereSubdivision` → default (e.g. 16)
-- `planeResolution` → default (e.g. 8)
-- `floorColourIndex` → 0 (White or chosen default)
-- `ballColourIndex` → 0
-- `lightColourIndex` → 0 (White)
-- `ballAlpha` → 0.5 (or chosen default)
-- `sceneRotX/Y/Z` → 0.0
-- `lightLocalPos` → (0, 0, 0) (sphere centre)
-- All texture toggles → false (or chosen defaults)
-- `wireframeMode` → false
+The interactive state currently tracks:
+
+- `sphereSubdivision`
+- `planeResolution`
+- `selectedColorTarget`
+- `floorColorIndex`
+- `ballColorIndex`
+- `lightColorIndex`
+- `ballAlpha`
+- `colourTextureEnabled`
+- `displacementTextureEnabled`
+- `alphaTextureEnabled`
+- `wireframeMode`
+- `sceneRotXDegrees`
+- `sceneRotYDegrees`
+- `sceneRotZDegrees`
+- `lightLocalPos`
+- `sphereDirty`
+- `planeDirty`
+
+---
+
+## Reset Behavior
+
+Pressing `Space` restores:
+
+- default sphere subdivision
+- default plane resolution
+- selected colour target
+- default floor / ball / light colours
+- default ball alpha
+- all texture toggles off
+- wireframe off
+- all scene rotation angles to zero
+- light local position to the sphere centre

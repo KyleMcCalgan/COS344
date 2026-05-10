@@ -22,7 +22,7 @@
 | 7. Texture asset generation and loading | ✅ | Create BMP maps from scratch and load/bind them in OpenGL | Textures load successfully and can be bound without rendering errors |
 | 8. Texture feature integration | ✅ | `B` colour map, `N` displacement map, `M` alpha map | Each toggle has the expected visible effect on the golf ball |
 | 9. Wireframe mode | ✅ | Edge buffer generation, `GL_LINES` rendering, Enter debounce | Enter toggles a coloured transformed wireframe view |
-| 10. Final compliance and demo prep | ⬜ | Spec audit, defaults, makefile check, clean exit, docs and submission prep | Full manual walkthrough of all rubric items succeeds |
+| 10. Final compliance and demo prep | 🔄 | Spec audit, defaults, makefile check, clean exit, docs and submission prep | Full manual walkthrough of all rubric items succeeds |
 
 ### Feature Checklist
 
@@ -56,8 +56,11 @@
 | Enter debounce | ✅ | `Enter` / keypad `Enter` toggles wireframe with a 0.20s debounce |
 | Subdivision runtime adjustment | ✅ | `I` / `K` rebuild the sphere mesh |
 | Plane resolution runtime adjustment | ✅ | `O` / `L` rebuild the plane mesh |
-| Final compile + clean exit check | ⬜ | |
-| Submission archive + makefile check | ⬜ | |
+| Final compile check | ✅ | Verified with `make clean main` and follow-up `make main` after title / texture workflow updates |
+| Clean exit check | ⬜ | Still needs a final manual run-through in the GLFW window |
+| Window title set to correct student number | ✅ | Window title is now `u24648826` |
+| Standalone BMP regeneration helper | ✅ | `textures/generate_bitmaps.py` reproduces the three texture maps without build integration |
+| Submission archive + makefile check | ⬜ | Final archive / packaging pass still pending |
 
 **Status key:** ⬜ Not started | 🔄 In progress | ✅ Done
 
@@ -122,6 +125,7 @@ Record decisions here as they are made during implementation.
 | Smooth or hard dimple edges | Smooth | Gives cleaner displacement and alpha transitions |
 | BMP format (24-bit / 32-bit) | 24-bit | Simpler loader and sufficient for all three maps |
 | Texture creation workflow | Manual BMP files | Keeps the submission asset pipeline simple and avoids helper generation tooling |
+| Optional regeneration helper | `textures/generate_bitmaps.py` | Lets the three BMPs be recreated outside the build while keeping the submission workflow manual |
 
 ### Lighting Decisions
 
@@ -149,6 +153,7 @@ Record decisions here as they are made during implementation.
 | Default alpha value | `0.5` | Clearly translucent without making the inner marker too hard to see |
 | Enter debounce time (ms) | `200` | Prevents rapid repeat toggles while keeping the mode responsive |
 | Wireframe: separate shader or flag | Shared shader with lighting/textures disabled | Keeps the pipeline simple while still using `GL_LINES` correctly |
+| Window title | `u24648826` | Matches the required student-number title |
 
 ### Colour Decisions
 
@@ -168,7 +173,10 @@ Record any bugs, unexpected behaviour, or blockers here.
 
 | Date | Issue | Resolution |
 |------|-------|------------|
-| | | |
+| 2026-05-10 | Floor lighting originally tinted the whole plane globally | Ambient and direct lighting contributions were separated so the colour hotspot stays localised |
+| 2026-05-10 | Translucent sphere showed far-side shell artifacts around the equator | Sphere draw path now culls back faces to reduce interior bleed-through |
+| 2026-05-10 | Displacement map initially deformed the sphere too aggressively | Max displacement was reduced from `0.08` to `0.03` |
+| 2026-05-10 | Texture workflow depended on helper generation and directory scanning | Switched to manual fixed BMP paths and removed the build-time generator tool |
 
 ---
 
@@ -180,3 +188,5 @@ Note any cases where the actual implementation differs from what was planned.
 |-----------|---------|--------|--------|
 | Plane preview shading | Uniform floor colour | Subtle UV grid overlay while solid rendering | Makes plane resolution changes readable during manual testing before wireframe is implemented |
 | Light preview before lighting phase | No explicit light visualisation needed beyond movement state | Light marker already uses the active light colour | Makes light-colour cycling and translation testable before floor lighting is implemented |
+| Colour controls | Direct per-object previous / next keys | `1/2/3` selects floor / ball / light, then `[` / `]` cycles | Keeps the control scheme compact and avoids collisions with fixed spec keys |
+| Texture asset workflow | Build-time generation from C++ helper | Manual BMP assets with optional standalone Python regeneration helper | Keeps runtime / build simpler while still allowing the textures to be recreated from scratch |

@@ -204,7 +204,6 @@ void Scene::draw(GLuint shaderProgram, const InputState &input, int framebufferW
 
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
-    glDepthMask(GL_FALSE);
     m_textures.bindAll(shaderProgram);
     fillMatrixUniform(shaderProgram, "MVP", planeMvp);
     fillMatrixUniform(shaderProgram, "Model", model);
@@ -222,7 +221,6 @@ void Scene::draw(GLuint shaderProgram, const InputState &input, int framebufferW
     fillIntUniform(shaderProgram, "alphaMap", 2);
     fillVec3Uniform(shaderProgram, "objectColor", ballColor.r, ballColor.g, ballColor.b);
     m_sphereMesh.drawSolid();
-    glDepthMask(GL_TRUE);
     glDisable(GL_CULL_FACE);
 }
 

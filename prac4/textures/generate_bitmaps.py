@@ -1,17 +1,4 @@
-#!/usr/bin/env python3
-"""
-Regenerate the three golf-ball texture maps used by the practical.
 
-This script is intentionally standalone:
-- no third-party packages
-- no build integration
-- writes uncompressed 24-bit BMP files directly
-
-Outputs:
-- textures/colour/colour.bmp
-- textures/displacement/displacement.bmp
-- textures/alpha/alpha.bmp
-"""
 
 from math import sqrt
 from pathlib import Path
