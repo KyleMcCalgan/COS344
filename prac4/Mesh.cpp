@@ -6,7 +6,8 @@ const GLsizei FLOATS_PER_VERTEX = 8;
 }
 
 Mesh::Mesh()
-    : vertexArrayId(0), vertexBufferId(0), elementBufferId(0), indexCount(0)
+    : vertexArrayId(0), vertexBufferId(0), elementBufferId(0), edgeElementBufferId(0),
+      triangleIndexCount(0), edgeIndexCount(0)
 {
 }
 
@@ -32,7 +33,13 @@ void Mesh::upload(const MeshData &meshData)
         glGenBuffers(1, &elementBufferId);
     }
 
-    indexCount = static_cast<GLsizei>(meshData.indexCount);
+    if (edgeElementBufferId == 0)
+    {
+        glGenBuffers(1, &edgeElementBufferId);
+    }
+
+    triangleIndexCount = static_cast<GLsizei>(meshData.indexCount);
+    edgeIndexCount = static_cast<GLsizei>(meshData.edgeIndexCount);
 
     glBindVertexArray(vertexArrayId);
 
@@ -44,6 +51,11 @@ void Mesh::upload(const MeshData &meshData)
     glBufferData(GL_ELEMENT_ARRAY_BUFFER,
                  meshData.indexCount * static_cast<int>(sizeof(unsigned int)),
                  meshData.indexData, GL_STATIC_DRAW);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, edgeElementBufferId);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER,
+                 meshData.edgeIndexCount * static_cast<int>(sizeof(unsigned int)),
+                 meshData.edgeIndexData, GL_STATIC_DRAW);
 
     const GLsizei stride = FLOATS_PER_VERTEX * static_cast<GLsizei>(sizeof(float));
 
@@ -61,15 +73,30 @@ void Mesh::upload(const MeshData &meshData)
     glBindVertexArray(0);
 }
 
-void Mesh::draw() const
+void Mesh::drawSolid() const
 {
     glBindVertexArray(vertexArrayId);
-    glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_INT, 0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementBufferId);
+    glDrawElements(GL_TRIANGLES, triangleIndexCount, GL_UNSIGNED_INT, 0);
+    glBindVertexArray(0);
+}
+
+void Mesh::drawWireframe() const
+{
+    glBindVertexArray(vertexArrayId);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, edgeElementBufferId);
+    glDrawElements(GL_LINES, edgeIndexCount, GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
 }
 
 void Mesh::release()
 {
+    if (edgeElementBufferId != 0)
+    {
+        glDeleteBuffers(1, &edgeElementBufferId);
+        edgeElementBufferId = 0;
+    }
+
     if (elementBufferId != 0)
     {
         glDeleteBuffers(1, &elementBufferId);
@@ -88,5 +115,6 @@ void Mesh::release()
         vertexArrayId = 0;
     }
 
-    indexCount = 0;
+    triangleIndexCount = 0;
+    edgeIndexCount = 0;
 }

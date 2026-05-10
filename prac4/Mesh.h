@@ -11,7 +11,9 @@ private:
     GLuint vertexArrayId;
     GLuint vertexBufferId;
     GLuint elementBufferId;
-    GLsizei indexCount;
+    GLuint edgeElementBufferId;
+    GLsizei triangleIndexCount;
+    GLsizei edgeIndexCount;
 
     Mesh(const Mesh &);
     Mesh &operator=(const Mesh &);
@@ -21,7 +23,8 @@ public:
     ~Mesh();
 
     void upload(const MeshData &meshData);
-    void draw() const;
+    void drawSolid() const;
+    void drawWireframe() const;
     void release();
 };
 

@@ -5,8 +5,10 @@ struct MeshData
 {
     float *vertexData;
     unsigned int *indexData;
+    unsigned int *edgeIndexData;
     int floatCount;
     int indexCount;
+    int edgeIndexCount;
 };
 
 MeshData generateSphereMesh(int subdivisionLevel, float radius);

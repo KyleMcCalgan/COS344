@@ -102,7 +102,7 @@ This is simple to compute and looks convincing.
 
 ## Texture Loading (`texture.cpp`)
 
-- Read BMP files from the `textures/` directory at startup.
+- Read BMP files from the `textures/` directory tree at startup.
 - Upload to GPU as `GL_TEXTURE_2D` objects.
 - Use `GL_REPEAT` wrapping and `GL_LINEAR` filtering (or `GL_NEAREST` for crisp dimple edges).
 - Bind to texture units 0, 1, 2 for colour, displacement, and alpha respectively.
@@ -128,9 +128,9 @@ uniform bool alphaTexEnabled;
 
 | File | Description |
 |------|-------------|
-| `textures/golf_colour.bmp` | Colour/dimple shading map |
-| `textures/golf_displacement.bmp` | Surface displacement map |
-| `textures/golf_alpha.bmp` | Per-dimple alpha/transparency map |
+| `textures/colour/golf_colour.bmp` | Colour/dimple shading map |
+| `textures/displacement/golf_displacement.bmp` | Surface displacement map |
+| `textures/alpha/golf_alpha.bmp` | Per-dimple alpha/transparency map |
 
 ---
 

@@ -1,15 +1,49 @@
 #include "Geometry.h"
 
 #include <cmath>
+#include <set>
+#include <utility>
 
 namespace
 {
 const int FLOATS_PER_VERTEX = 8;
 const float PI = 3.14159265359f;
 
-float clampPositive(float value)
+unsigned int *buildEdgeIndexData(const unsigned int *triangleIndices, int triangleIndexCount,
+                                 int &edgeIndexCount)
 {
-    return (value < 0.0f) ? 0.0f : value;
+    std::set<std::pair<unsigned int, unsigned int> > edges;
+
+    for (int i = 0; i + 2 < triangleIndexCount; i += 3)
+    {
+        const unsigned int a = triangleIndices[i];
+        const unsigned int b = triangleIndices[i + 1];
+        const unsigned int c = triangleIndices[i + 2];
+
+        const std::pair<unsigned int, unsigned int> ab =
+            (a < b) ? std::make_pair(a, b) : std::make_pair(b, a);
+        const std::pair<unsigned int, unsigned int> bc =
+            (b < c) ? std::make_pair(b, c) : std::make_pair(c, b);
+        const std::pair<unsigned int, unsigned int> ac =
+            (a < c) ? std::make_pair(a, c) : std::make_pair(c, a);
+
+        edges.insert(ab);
+        edges.insert(bc);
+        edges.insert(ac);
+    }
+
+    edgeIndexCount = static_cast<int>(edges.size()) * 2;
+    unsigned int *edgeIndexData = new unsigned int[edgeIndexCount];
+    int edgeOffset = 0;
+
+    for (std::set<std::pair<unsigned int, unsigned int> >::const_iterator it = edges.begin();
+         it != edges.end(); ++it)
+    {
+        edgeIndexData[edgeOffset++] = it->first;
+        edgeIndexData[edgeOffset++] = it->second;
+    }
+
+    return edgeIndexData;
 }
 }
 
@@ -96,6 +130,7 @@ MeshData generateSphereMesh(int subdivisionLevel, float radius)
     MeshData meshData;
     meshData.vertexData = vertexData;
     meshData.indexData = indexData;
+    meshData.edgeIndexData = buildEdgeIndexData(indexData, indexCount, meshData.edgeIndexCount);
     meshData.floatCount = floatCount;
     meshData.indexCount = indexCount;
     return meshData;
@@ -158,6 +193,7 @@ MeshData generatePlaneMesh(int resolution, float yPosition, float extent)
     MeshData meshData;
     meshData.vertexData = vertexData;
     meshData.indexData = indexData;
+    meshData.edgeIndexData = buildEdgeIndexData(indexData, indexCount, meshData.edgeIndexCount);
     meshData.floatCount = floatCount;
     meshData.indexCount = indexCount;
     return meshData;
@@ -167,8 +203,11 @@ void destroyMeshData(MeshData &meshData)
 {
     delete[] meshData.vertexData;
     delete[] meshData.indexData;
+    delete[] meshData.edgeIndexData;
     meshData.vertexData = 0;
     meshData.indexData = 0;
+    meshData.edgeIndexData = 0;
     meshData.floatCount = 0;
     meshData.indexCount = 0;
+    meshData.edgeIndexCount = 0;
 }
