@@ -13,10 +13,10 @@
 | Phase | Status | Scope | Manual test target |
 |-------|--------|-------|--------------------|
 | 0. Bootstrap and compile path | ✅ | Window creation, shader loading, basic draw loop, Prac 1 math imported/reused | Program opens, renders placeholder geometry, exits cleanly |
-| 1. Scene state and input foundation | ⬜ | Centralise scene state, choose key bindings, add input routing for future features | Program still runs while state values can be changed via keys |
-| 2. Mesh framework and sphere generation | ⬜ | Reusable mesh/buffer ownership and runtime-regenerating UV sphere | Sphere renders and subdivision changes are visible |
-| 3. Plane generation and full scene render | ⬜ | Floor grid mesh, indexed drawing, camera/projection, draw sphere + plane together | Sphere rests on plane and both render correctly in 3D |
-| 4. Transformations and reset | ⬜ | Scene rotations, local-space light translation state, reset behaviour | W/A/S/D/E/Q, arrows, `<>`, and `Space` visibly work |
+| 1. Scene state and input foundation | ✅ | Centralise scene state, choose key bindings, add input routing for future features | Program still runs while state values can be changed via keys |
+| 2. Mesh framework and sphere generation | ✅ | Reusable mesh/buffer ownership and runtime-regenerating UV sphere | Sphere renders and subdivision changes are visible |
+| 3. Plane generation and full scene render | ✅ | Floor grid mesh, indexed drawing, camera/projection, draw sphere + plane together | Sphere rests on plane and both render correctly in 3D |
+| 4. Transformations and reset | ✅ | Scene rotations, local-space light translation state, reset behaviour | W/A/S/D/E/Q, arrows, `<>`, and `Space` visibly work |
 | 5. Colour, alpha, and translucency | ⬜ | Floor/ball/light colour cycling, alpha control, blending order | Colours cycle and ball transparency updates correctly |
 | 6. Floor lighting | ⬜ | Point light, floor-only Phong shading, effective light colour = light × glass | Light projection on floor responds to colour and movement |
 | 7. Texture asset generation and loading | ⬜ | Create BMP maps from scratch and load/bind them in OpenGL | Textures load successfully and can be bound without rendering errors |
@@ -30,13 +30,13 @@
 |-------|--------|-------|
 | Project setup (Makefile, window, GL context) | ✅ | Basic compile/run path is present |
 | Prac 1 math utilities ported/linked | ✅ | `math3d.hpp` and supporting matrix/vector code are in use |
-| Sphere generation (UV sphere) | ⬜ | |
-| Plane generation (grid) | ⬜ | |
-| Basic render loop (clear + draw) | ✅ | Placeholder triangle loop works |
-| Camera + projection matrix | ✅ | Present in current bootstrap scene |
-| Scene rotation (W/A/S/D/E/Q) | ⬜ | |
-| Light translation (arrows + <>) | ⬜ | |
-| Reset command (Space) | ⬜ | |
+| Sphere generation (UV sphere) | ✅ | Runtime-regenerating UV sphere mesh is in place |
+| Plane generation (grid) | ✅ | Runtime-regenerating plane mesh is in place |
+| Basic render loop (clear + draw) | ✅ | Full scene now draws sphere + plane |
+| Camera + projection matrix | ✅ | Perspective + lookAt camera now frame the scene |
+| Scene rotation (W/A/S/D/E/Q) | ✅ | Accumulated scene rotation is applied to sphere, plane, and light marker |
+| Light translation (arrows + <>) | ✅ | Local-space light marker movement is visible for manual testing |
+| Reset command (Space) | ✅ | Restores mesh densities, rotations, and light position |
 | Colour cycling — floor | ⬜ | |
 | Colour cycling — golf ball | ⬜ | |
 | Colour cycling — light | ⬜ | |
@@ -54,8 +54,8 @@
 | Wireframe colour correct | ⬜ | |
 | Wireframe transformations correct | ⬜ | |
 | Enter debounce | ⬜ | |
-| Subdivision runtime adjustment | ⬜ | |
-| Plane resolution runtime adjustment | ⬜ | |
+| Subdivision runtime adjustment | ✅ | `I` / `K` rebuild the sphere mesh |
+| Plane resolution runtime adjustment | ✅ | `O` / `L` rebuild the plane mesh |
 | Final compile + clean exit check | ⬜ | |
 | Submission archive + makefile check | ⬜ | |
 
@@ -104,11 +104,11 @@ Record decisions here as they are made during implementation.
 
 | Decision | Value Chosen | Reason |
 |----------|-------------|--------|
-| Sphere radius | | |
-| Default sphere subdivision | | |
-| Plane extent (±X and ±Z) | | |
-| Default plane resolution | | |
-| Plane Y position (= -radius?) | | |
+| Sphere radius | `1.0` | Clean unit sphere normals and simple plane placement |
+| Default sphere subdivision | `12` | Enough detail for a clear first milestone while still showing low-res changes |
+| Plane extent (±X and ±Z) | `4.5` | Large enough to show the future light projection clearly |
+| Default plane resolution | `8` | Moderate detail for incremental testing |
+| Plane Y position (= -radius?) | `-1.0` | Makes the sphere rest on the floor by construction |
 
 ### Texture Decisions
 
@@ -137,16 +137,16 @@ Record decisions here as they are made during implementation.
 
 | Decision | Value Chosen | Reason |
 |----------|-------------|--------|
-| Camera position | | |
-| Projection FOV | | |
-| Near clip plane | | |
-| Far clip plane | | |
+| Camera position | `(0.0, 1.6, 4.6)` looking toward `(0.0, -0.15, 0.0)` | Gives a readable three-quarter view of sphere and floor |
+| Projection FOV | `45°` | Natural perspective without strong distortion |
+| Near clip plane | `0.1` | Keeps the full scene visible without clipping nearby geometry |
+| Far clip plane | `100.0` | Large enough for this scene while keeping depth precision reasonable |
 | Rotation step per key press (degrees) | | |
 | Light translation step (units) | | |
 | Alpha step per +/- press | | |
 | Default alpha value | | |
 | Enter debounce time (ms) | | |
-| Wireframe: separate shader or flag | | |
+| Wireframe: separate shader or flag | Not decided | To be chosen in phase 9 |
 
 ---
 
@@ -166,4 +166,4 @@ Note any cases where the actual implementation differs from what was planned.
 
 | Component | Planned | Actual | Reason |
 |-----------|---------|--------|--------|
-| | | | |
+| Plane preview shading | Uniform floor colour | Subtle UV grid overlay while solid rendering | Makes plane resolution changes readable during manual testing before wireframe is implemented |
