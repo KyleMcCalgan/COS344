@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cp /home/kyle/CODE/COS344/prac3/prac1/Matrix.h /home/kyle/CODE/COS344/prac3/prac1/Matrix.cpp /home/kyle/CODE/COS344/prac3/prac1/Vector.h /home/kyle/CODE/COS344/prac3/prac1/Vector.cpp /home/kyle/CODE/COS344/HAPrepV2/prac1/)",
+      "Bash(cp /home/kyle/CODE/COS344/prac3/shader.hpp /home/kyle/CODE/COS344/prac3/shader.cpp /home/kyle/CODE/COS344/HAPrepV2/)",
+      "Bash(cp /home/kyle/CODE/COS344/prac3/VertexShader.glsl /home/kyle/CODE/COS344/prac3/FragmentShader.glsl /home/kyle/CODE/COS344/HAPrepV2/)",
+      "Bash(cp /home/kyle/CODE/COS344/prac3/src/Mesh.hpp /home/kyle/CODE/COS344/prac3/src/Mesh.cpp /home/kyle/CODE/COS344/prac3/src/math3d.hpp /home/kyle/CODE/COS344/HAPrepV2/src/)",
+      "Bash(g++ *)"
+    ]
+  }
+}
