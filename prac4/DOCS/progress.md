@@ -8,14 +8,32 @@
 
 ## Implementation Progress
 
+### Phase Plan
+
+| Phase | Status | Scope | Manual test target |
+|-------|--------|-------|--------------------|
+| 0. Bootstrap and compile path | ✅ | Window creation, shader loading, basic draw loop, Prac 1 math imported/reused | Program opens, renders placeholder geometry, exits cleanly |
+| 1. Scene state and input foundation | ⬜ | Centralise scene state, choose key bindings, add input routing for future features | Program still runs while state values can be changed via keys |
+| 2. Mesh framework and sphere generation | ⬜ | Reusable mesh/buffer ownership and runtime-regenerating UV sphere | Sphere renders and subdivision changes are visible |
+| 3. Plane generation and full scene render | ⬜ | Floor grid mesh, indexed drawing, camera/projection, draw sphere + plane together | Sphere rests on plane and both render correctly in 3D |
+| 4. Transformations and reset | ⬜ | Scene rotations, local-space light translation state, reset behaviour | W/A/S/D/E/Q, arrows, `<>`, and `Space` visibly work |
+| 5. Colour, alpha, and translucency | ⬜ | Floor/ball/light colour cycling, alpha control, blending order | Colours cycle and ball transparency updates correctly |
+| 6. Floor lighting | ⬜ | Point light, floor-only Phong shading, effective light colour = light × glass | Light projection on floor responds to colour and movement |
+| 7. Texture asset generation and loading | ⬜ | Create BMP maps from scratch and load/bind them in OpenGL | Textures load successfully and can be bound without rendering errors |
+| 8. Texture feature integration | ⬜ | `B` colour map, `N` displacement map, `M` alpha map | Each toggle has the expected visible effect on the golf ball |
+| 9. Wireframe mode | ⬜ | Edge buffer generation, `GL_LINES` rendering, Enter debounce | Enter toggles a coloured transformed wireframe view |
+| 10. Final compliance and demo prep | ⬜ | Spec audit, defaults, makefile check, clean exit, docs and submission prep | Full manual walkthrough of all rubric items succeeds |
+
+### Feature Checklist
+
 | Phase | Status | Notes |
 |-------|--------|-------|
-| Project setup (Makefile, window, GL context) | ⬜ | |
-| Prac 1 math utilities ported/linked | ⬜ | |
+| Project setup (Makefile, window, GL context) | ✅ | Basic compile/run path is present |
+| Prac 1 math utilities ported/linked | ✅ | `math3d.hpp` and supporting matrix/vector code are in use |
 | Sphere generation (UV sphere) | ⬜ | |
 | Plane generation (grid) | ⬜ | |
-| Basic render loop (clear + draw) | ⬜ | |
-| Camera + projection matrix | ⬜ | |
+| Basic render loop (clear + draw) | ✅ | Placeholder triangle loop works |
+| Camera + projection matrix | ✅ | Present in current bootstrap scene |
 | Scene rotation (W/A/S/D/E/Q) | ⬜ | |
 | Light translation (arrows + <>) | ⬜ | |
 | Reset command (Space) | ⬜ | |
@@ -63,6 +81,24 @@ Record decisions here as they are made during implementation.
 | Ball colour prev | | |
 | Light colour next | | |
 | Light colour prev | | |
+
+### Initial Key Plan
+
+| Action | Key Chosen | Date Decided |
+|--------|-----------|--------------|
+| Sphere subdivision up | `I` | 2026-05-10 |
+| Sphere subdivision down | `K` | 2026-05-10 |
+| Plane resolution up | `O` | 2026-05-10 |
+| Plane resolution down | `L` | 2026-05-10 |
+| Floor colour next | `X` | 2026-05-10 |
+| Floor colour prev | `Z` | 2026-05-10 |
+| Ball colour next | `V` | 2026-05-10 |
+| Ball colour prev | `C` | 2026-05-10 |
+| Light colour next | `G` | 2026-05-10 |
+| Light colour prev | `F` | 2026-05-10 |
+
+> These bindings are chosen to avoid collisions with the fixed spec keys:
+> `W/A/S/D/E/Q`, arrows, `<>`, `Space`, `Enter`, `B`, `N`, `M`, `+`, `-`.
 
 ### Geometry Decisions
 
