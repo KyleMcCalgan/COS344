@@ -14,7 +14,7 @@ namespace
 {
 const int WINDOW_WIDTH = 1000;
 const int WINDOW_HEIGHT = 1000;
-const char *WINDOW_TITLE = "u24681012";
+const char *WINDOW_TITLE = "u24648826";
 
 const char *getError()
 {
